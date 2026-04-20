@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const CSS = `
@@ -34,7 +33,6 @@ const CSS = `
   }
   .btn-primary-nav:hover { background: #2D2D44; }
 
-  /* Hero */
   .hero {
     margin: 28px 48px;
     background: #fff;
@@ -85,7 +83,6 @@ const CSS = `
   .stat-num { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; color: #0F1117; letter-spacing: -0.5px; }
   .stat-lbl { font-size: 10px; color: #B0B7C3; font-weight: 500; letter-spacing: 0.9px; margin-top: 2px; text-transform: uppercase; }
 
-  /* 3D TICKET SCENE */
   .tickets-scene {
     perspective: 900px;
     min-width: 290px;
@@ -150,7 +147,6 @@ const CSS = `
   }
   .resolved-text { font-size: 12px; color: #059669; font-weight: 500; }
 
-  /* Stats bar */
   .stats-bar {
     background: #1C1C2E; margin: 0 48px; border-radius: 18px;
     padding: 30px 0; display: grid; grid-template-columns: repeat(4,1fr);
@@ -160,7 +156,6 @@ const CSS = `
   .sbar-num { font-family: 'Sora', sans-serif; font-size: 30px; font-weight: 700; color: #fff; letter-spacing: -0.8px; }
   .sbar-lbl { font-size: 10px; color: rgba(255,255,255,0.35); font-weight: 500; letter-spacing: 1px; margin-top: 5px; text-transform: uppercase; }
 
-  /* Features */
   .feat-section { padding: 64px 48px 56px; }
   .feat-heading { text-align: center; margin-bottom: 44px; }
   .feat-heading h2 { font-family: 'Sora', sans-serif; font-size: 30px; font-weight: 700; color: #0F1117; letter-spacing: -0.6px; }
@@ -195,7 +190,6 @@ const CSS = `
   }
   .fcheck-text { font-size: 12.5px; color: #374151; }
 
-  /* Footer */
   .footer {
     border-top: 1px solid #E5E7EB; padding: 20px 48px;
     display: flex; justify-content: space-between; align-items: center;
@@ -206,7 +200,6 @@ const CSS = `
   .footer-copy { font-size: 11.5px; color: #9CA3AF; }
 `;
 
-// ── Logo ───────────────────────────────────────────────────────────────────
 const Logo = () => (
   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -221,10 +214,8 @@ const Logo = () => (
   </div>
 );
 
-// ── Ticket Scene ───────────────────────────────────────────────────────────
 const TicketScene = () => (
   <div className="tickets-scene">
-    {/* Card 1 — IT incident */}
     <div className="tcard card1">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span className="tid">VCL-6892</span>
@@ -251,8 +242,6 @@ const TicketScene = () => (
         <span className="tav-label">3 assignés</span>
       </div>
     </div>
-
-    {/* Card 2 — Medical */}
     <div className="tcard card2">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span className="tid">RC-3921</span>
@@ -304,11 +293,11 @@ const features = [
 
 export default function Accueil() {
   const navigate = useNavigate();
+
   return (
     <>
       <style>{CSS}</style>
 
-      {/* Navbar */}
       <nav className="navbar">
         <Logo />
         <div style={{ display: "flex", gap: 30, alignItems: "center" }}>
@@ -318,13 +307,14 @@ export default function Accueil() {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn-connect" onClick={() => navigate("/login")}>
-  Se connecter
-</button>
-          <button className="btn-primary-nav">Déposer une réclamation</button>
+            Se connecter
+          </button>
+          <button className="btn-primary-nav" onClick={() => navigate("/login")}>
+            Déposer une réclamation
+          </button>
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="hero">
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="hero-badge">
@@ -340,7 +330,9 @@ export default function Accueil() {
             Transformez chaque réclamation en une opportunité d'amélioration opérationnelle.
           </p>
           <div className="hero-ctas">
-            <button className="btn-cta-main">Déposer une réclamation</button>
+            <button className="btn-cta-main" onClick={() => navigate("/login")}>
+              Déposer une réclamation
+            </button>
             <button className="btn-cta-sec">Voir la démo</button>
           </div>
           <div className="hero-stats">
@@ -357,7 +349,6 @@ export default function Accueil() {
 
       <div style={{ height: 24 }} />
 
-      {/* Stats bar */}
       <div className="stats-bar">
         {[["2.4k","UTILISATEURS ACTIFS"],["12min","TEMPS DE RÉPONSE"],["98%","SATISFACTION"],["400+","ÉQUIPES IT"]].map(([v,l]) => (
           <div className="sbar-item" key={l}>
@@ -367,7 +358,6 @@ export default function Accueil() {
         ))}
       </div>
 
-      {/* Features */}
       <section className="feat-section">
         <div className="feat-heading">
           <h2>Conçu pour l'efficacité opérationnelle</h2>
@@ -391,7 +381,6 @@ export default function Accueil() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="footer">
         <Logo />
         <p className="footer-copy">© 2026 Bayan. All rights reserved.</p>
