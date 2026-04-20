@@ -301,8 +301,19 @@ export default function Accueil() {
       <nav className="navbar">
         <Logo />
         <div style={{ display: "flex", gap: 30, alignItems: "center" }}>
-          {["Accueil","Fonctionnalités","À propos"].map((item, i) => (
-            <a key={item} href="#" className={`nav-link${i === 0 ? " active" : ""}`}>{item}</a>
+          {[
+            { name: "Accueil", path: "/" },
+            { name: "Fonctionnalités", path: "/fonctionnalites" },
+            { name: "À propos", path: "/a-propos" }
+          ].map((item, i) => (
+            <a
+              key={item.name}
+              href="#"
+              className={`nav-link${i === 0 ? " active" : ""}`}
+              onClick={(e) => { e.preventDefault(); navigate(item.path); }}
+            >
+              {item.name}
+            </a>
           ))}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
