@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import MessagerieePage, { MSG_CSS } from "./MessagerieePage";
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -588,104 +589,7 @@ const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit }) => {
 
 // ── MESSAGERIE PAGE ───────────────────────────────────────
 const ChatbotPage = () => {
-  const contacts = [
-    { id:"karim", name:"Karim Alami", role:"Admin", avatar:"KA", color:"#4F46E5", online:true, last:"Priorité haute confirmée.", time:"09:17", unread:0 },
-    { id:"sarah", name:"Sarah Lemarié", role:"Employée", avatar:"SL", color:"#10B981", online:true, last:"J’ai ajouté une nouvelle réclamation.", time:"09:12", unread:2 },
-    { id:"aya", name:"Aya Saïdi", role:"Employée", avatar:"AS", color:"#F59E0B", online:true, last:"Reçu merci ! Je traite ça demain.", time:"14:50", unread:1 },
-    { id:"zakaria", name:"Zakaria A.", role:"Intervenant interne", avatar:"ZA", color:"#06B6D4", online:true, last:"Diagnostic en cours sur le serveur.", time:"10:26", unread:0 },
-    { id:"techfix", name:"TechFix SARL", role:"Intervenant externe", avatar:"TF", color:"#EF4444", online:false, last:"Technicien disponible demain matin.", time:"Hier", unread:0 },
-    { id:"nadia", name:"Nadia Benali", role:"Admin", avatar:"NB", color:"#8B5CF6", online:true, last:"Démarrer une conversation", time:"", unread:2 },
-    { id:"omar", name:"Omar Tahiri", role:"Maintenance externe", avatar:"OT", color:"#EC4899", online:false, last:"Démarrer une conversation", time:"", unread:0 },
-    { id:"leila", name:"Leila Mansouri", role:"Employée", avatar:"LM", color:"#0EA5E9", online:true, last:"Merci, c’est noté !", time:"08:30", unread:0 },
-  ];
-
-  const initialMessages = {
-    karim: [
-      { id:1, from:"other", text:"Bonjour, as-tu avancé sur la réclamation ID-98250 ?", time:"09:10" },
-      { id:2, from:"me", text:"Oui, j’ai transmis le dossier au service informatique ce matin. En attente de leur retour.", time:"09:14" },
-      { id:3, from:"other", text:"Parfait, tiens-moi informé dès que tu as une réponse. Priorité haute ce dossier.", time:"09:16" },
-      { id:4, from:"me", text:"Bien sûr, je reviens vers toi dans la journée 👍", time:"09:17" },
-    ],
-    sarah: [
-      { id:1, from:"other", text:"Bonjour, j’ai ajouté une nouvelle réclamation concernant l’accès CRM.", time:"09:02" },
-      { id:2, from:"me", text:"Bonjour Sarah, je vais l’assigner à un intervenant interne IT.", time:"09:05" },
-    ],
-    aya: [{ id:1, from:"other", text:"Reçu merci ! Je traite ça demain.", time:"14:50" }],
-    zakaria: [
-      { id:1, from:"other", text:"Le diagnostic est en cours, problème réseau identifié.", time:"10:22" },
-      { id:2, from:"me", text:"Merci Zakaria, ajoute un commentaire dans la réclamation après intervention.", time:"10:24" },
-    ],
-    techfix: [
-      { id:1, from:"other", text:"Bonjour, notre technicien peut intervenir demain matin pour l’ascenseur.", time:"Hier" },
-      { id:2, from:"me", text:"Très bien, je confirme l’intervention externe.", time:"Hier" },
-    ],
-    nadia: [],
-    omar: [],
-    leila: [{ id:1, from:"other", text:"Merci, c’est noté !", time:"08:30" }],
-  };
-
-  const [activeContact, setActiveContact] = useState("karim");
-  const [messagesByContact, setMessagesByContact] = useState(initialMessages);
-  const [input, setInput] = useState("");
-  const [search, setSearch] = useState("");
-  const bottomRef = useRef(null);
-
-  const currentContact = contacts.find(c => c.id === activeContact) || contacts[0];
-  const currentMessages = messagesByContact[activeContact] || [];
-  const filteredContacts = contacts.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.role.toLowerCase().includes(search.toLowerCase()));
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [activeContact, messagesByContact]);
-
-  const send = () => {
-    const text = input.trim();
-    if (!text) return;
-    const newMessage = { id:Date.now(), from:"me", text, time:"maintenant" };
-    setMessagesByContact(prev => ({ ...prev, [activeContact]: [...(prev[activeContact] || []), newMessage] }));
-    setInput("");
-  };
-
-  return (
-    <div className="messagerie-page">
-      <div className="messages-list">
-        <div className="messages-title-row"><h3>Messages</h3><span>3 nouveaux</span></div>
-        <input className="messages-search" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)}/>
-        <div className="contact-list">
-          {filteredContacts.map(c => (
-            <div key={c.id} className={`contact-item ${activeContact === c.id ? "active" : ""}`} onClick={() => setActiveContact(c.id)}>
-              <div className="contact-avatar" style={{ background:c.color }}>{c.avatar}<span className={c.online ? "online-dot" : "offline-dot"}/></div>
-              <div className="contact-info">
-                <div className="contact-top"><strong>{c.name}</strong><small>{c.time}</small></div>
-                <p>{c.last}</p><small className="contact-role">{c.role}</small>
-              </div>
-              {c.unread > 0 && <span className="unread-badge">{c.unread}</span>}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="conversation-box">
-        <div className="conversation-header">
-          <div className="contact-avatar" style={{ background:currentContact.color }}>{currentContact.avatar}<span className={currentContact.online ? "online-dot" : "offline-dot"}/></div>
-          <div><h3>{currentContact.name}</h3><p>{currentContact.online ? "En ligne" : "Hors ligne"} · {currentContact.role}</p></div>
-          <div className="conversation-actions"><button title="Appel">☎</button><button title="Vidéo">🎥</button><button title="Infos">ⓘ</button></div>
-        </div>
-        <div className="conversation-body">
-          <div className="today-label">Aujourd’hui</div>
-          {currentMessages.length === 0 && <div className="empty-conversation">Démarrer une conversation avec {currentContact.name}</div>}
-          {currentMessages.map(m => (
-            <div key={m.id} className={`message-line ${m.from === "me" ? "me" : "other"}`}>
-              {m.from !== "me" && <div className="mini-avatar" style={{ background:currentContact.color }}>{currentContact.avatar}</div>}
-              <div><div className={`message-bubble ${m.from === "me" ? "me" : "other"}`}>{m.text}</div><small className={`message-time ${m.from === "me" ? "me" : "other"}`}>{m.time}</small></div>
-            </div>
-          ))}
-          <div ref={bottomRef}/>
-        </div>
-        <div className="conversation-input">
-          <input placeholder={`Message à ${currentContact.name}...`} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if(e.key === "Enter"){ e.preventDefault(); send(); } }}/>
-          <button className="emoji-btn" type="button">😊</button><button className="attach-btn" type="button">📎</button><button className="send-message-btn" onClick={send} type="button">➤</button>
-        </div>
-      </div>
-    </div>
-  );
+  return <MessagerieePage />;
 };
 
 // ── ACTIVITE PAGE ─────────────────────────────────────────
@@ -776,7 +680,7 @@ export default function Responsable() {
 
   return (
     <>
-      <style>{CSS}</style>
+      <style>{CSS + MSG_CSS}</style>
       <div className="resp-layout">
         <aside className="sidebar">
           <Logo/>
@@ -847,3 +751,4 @@ export default function Responsable() {
     </>
   );
 }
+
