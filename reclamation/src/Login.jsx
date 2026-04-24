@@ -76,23 +76,14 @@ export default function Login() {
   const navigate = useNavigate();
   const [role, setRole] = useState("Employé");
   const [showPwd, setShowPwd] = useState(false);
-  const roles = ["Employé", "Responsable", "Admin", "Intervenant"];
+  const roles = ["Employé", "Intervenant", "Responsable", "Admin"];
 
   const handleLogin = () => {
-  const user = {
-    role: role,
-    email: "test@bayan.ma"
+    if (role === "Admin")           navigate("/dashboard");
+    else if (role === "Employé")    navigate("/employee");
+    else if (role === "Intervenant")navigate("/intervenant");
+    else                            navigate("/employee");
   };
-
-  // 🔐 sauvegarder utilisateur
-  localStorage.setItem("user", JSON.stringify(user));
-
-  // 🔀 redirection selon rôle
-  if (role === "Admin") navigate("/dashboard");
-  else if (role === "Responsable") navigate("/responsable");
-  else if (role === "Employé") navigate("/employee");
-  else if (role === "Intervenant") navigate("/intervenant");
-};
 
   return (
     <>
