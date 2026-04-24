@@ -222,6 +222,52 @@ const CSS = `
   .send-message-btn:hover { background: #4338CA; }
   @media (max-width: 900px) { .messagerie-page { grid-template-columns: 1fr; height: auto; min-height: calc(100vh - 112px); } .messages-list { border-right: none; border-bottom: 1px solid #E5E7EB; max-height: 310px; } .conversation-body { min-height: 420px; } }
 
+
+  /* RESPONSIVE TELEPHONE - RESPONSABLE */
+  .mobile-menu-btn { display: none; width: 36px; height: 36px; border-radius: 9px; border: 1px solid #E5E7EB; background: #fff; cursor: pointer; align-items: center; justify-content: center; font-size: 20px; color: #111827; }
+  .mobile-backdrop { display: none; }
+
+  @media (max-width: 768px) {
+    .resp-layout { display: block; min-height: 100vh; }
+    .sidebar { width: 260px; transform: translateX(-100%); transition: transform 0.25s ease; z-index: 1000; box-shadow: 10px 0 35px rgba(15, 23, 42, 0.18); }
+    .sidebar.mobile-open { transform: translateX(0); }
+    .mobile-backdrop { display: block; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.35); z-index: 900; }
+    .main-content { margin-left: 0; width: 100%; min-height: 100vh; }
+    .topbar { height: 56px; padding: 0 12px; gap: 10px; }
+    .mobile-menu-btn { display: flex; flex-shrink: 0; }
+    .topbar-title { font-size: 13.5px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .topbar-right { gap: 6px; }
+    .resp-pill { display: none; }
+    .icon-btn { width: 34px; height: 34px; }
+    .page-body { padding: 14px 12px; }
+    .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .stat-card { padding: 14px 12px; }
+    .stat-value { font-size: 21px; }
+    .services-grid { grid-template-columns: 1fr; gap: 10px; }
+    .card { padding: 16px 14px; border-radius: 14px; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .search-inline, .filter-select { width: 100%; }
+    .count-lbl { margin-left: 0; }
+    .tickets-table { min-width: 760px; }
+    .detail-panel { width: 92vw; padding: 22px 18px; }
+    .dp-row { gap: 12px; align-items: flex-start; }
+    .mini-select { max-width: 170px; }
+    .notif-dropdown { position: fixed; top: 62px; right: 10px; left: 10px; width: auto; max-height: 70vh; }
+    .toast { left: 14px; right: 14px; bottom: 16px; text-align: center; }
+    .msg-layout { height: calc(100vh - 84px); flex-direction: column; border-radius: 14px; overflow: hidden; }
+    .msg-contacts { width: 100%; max-height: 270px; border-right: none; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .msg-chat { min-height: 420px; }
+    .msg-chat-header { padding: 0 12px; }
+    .msg-bubble-wrap { max-width: 78%; }
+    .msg-input-bar { padding: 10px; }
+  }
+
+  @media (max-width: 430px) {
+    .stats-row { grid-template-columns: 1fr; }
+    .topbar-title { font-size: 13px; }
+    .detail-panel { width: 100vw; }
+  }
+
 `;
 
 // ── ALL TICKETS — TOUS LES SERVICES ──────────────────────
@@ -648,6 +694,7 @@ export default function Responsable() {
   const [showNotifs,      setShowNotifs]      = useState(false);
   const [toast,           setToast]           = useState(null);
   const [filterService,   setFilterService]   = useState("tous");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const notifRef = useRef(null);
   const toastRef = useRef(null);
 
@@ -666,7 +713,16 @@ export default function Responsable() {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const goToServiceTickets = (service) => { setFilterService(service); setActivePage("tickets"); };
+  const goToServiceTickets = (service) => {
+    setFilterService(service);
+    setActivePage("tickets");
+    setMobileMenuOpen(false);
+  };
+
+  const handleNavClick = (page) => {
+    setActivePage(page);
+    setMobileMenuOpen(false);
+  };
 
   const renderPage = () => {
     switch (activePage) {
@@ -682,12 +738,12 @@ export default function Responsable() {
     <>
       <style>{CSS + MSG_CSS}</style>
       <div className="resp-layout">
-        <aside className="sidebar">
+        <aside className={`sidebar${mobileMenuOpen ? " mobile-open" : ""}`}>
           <Logo/>
           <div className="sidebar-nav">
             <div className="sidebar-section">Navigation</div>
             {navItems.map(item => (
-              <button key={item.key} className={`nav-item${activePage===item.key?" active":""}`} onClick={() => setActivePage(item.key)}>
+              <button key={item.key} className={`nav-item${activePage===item.key?" active":""}`} onClick={() => handleNavClick(item.key)}>
                 {item.icon}{item.label}
                 {item.badge === "urgents" && urgent > 0 && <span className="nav-badge red">{urgent}</span>}
               </button>
@@ -713,8 +769,11 @@ export default function Responsable() {
           </div>
         </aside>
 
+        {mobileMenuOpen && <div className="mobile-backdrop" onClick={() => setMobileMenuOpen(false)} />}
+
         <div className="main-content">
           <header className="topbar">
+            <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)} aria-label="Ouvrir le menu">☰</button>
             <div className="topbar-title">{pageTitles[activePage]}</div>
             <div className="topbar-right">
               <span className="resp-pill">🏢 Responsable de Service</span>
