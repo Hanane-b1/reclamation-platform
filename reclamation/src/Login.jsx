@@ -76,12 +76,13 @@ export default function Login() {
   const navigate = useNavigate();
   const [role, setRole] = useState("Employé");
   const [showPwd, setShowPwd] = useState(false);
-  const roles = ["Employé", "Responsable", "Admin"];
+  const roles = ["Employé", "Intervenant", "Responsable", "Admin"];
 
   const handleLogin = () => {
-   if (role === "Admin") navigate("/dashboard");
-else if (role === "Responsable") navigate("/responsable");
-else navigate("/employee");
+    if (role === "Admin")           navigate("/dashboard");
+    else if (role === "Employé")    navigate("/employee");
+    else if (role === "Intervenant")navigate("/intervenant");
+    else                            navigate("/employee");
   };
 
   return (
