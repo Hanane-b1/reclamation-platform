@@ -344,7 +344,7 @@ export default function Accueil() {
             <button className="btn-cta-main" onClick={() => navigate("/login")}>
               Déposer une réclamation
             </button>
-            <button className="btn-cta-sec">Voir la démo</button>
+            <button className="btn-cta-sec" onClick={() => navigate("/demo")}>Voir la démo</button>
           </div>
           <div className="hero-stats">
             {[["99.9%","UPTIME"],["24h","DÉLAI MOYEN"],["15k+","TICKETS/MOIS"]].map(([v,l]) => (

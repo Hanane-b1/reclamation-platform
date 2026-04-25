@@ -4,6 +4,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import Accueil from "./Accueil";
 import Fonctionnalites from "./Fonctionnalites";
 import APropos from "./APropos";
+import Demo from "./Demo";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
 import Responsable from "./Responsable";
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/"                element={<Accueil />} />
           <Route path="/fonctionnalites" element={<Fonctionnalites />} />
           <Route path="/a-propos"        element={<APropos />} />
+          <Route path="/demo"            element={<Demo />} />
           <Route path="/login"           element={<Login />} />
 
           {/* Protégées */}
