@@ -41,7 +41,18 @@ export const MSG_CSS = `
   .msg-messages { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 4px; scroll-behavior: smooth; }
   .msg-messages::-webkit-scrollbar { width: 4px; }
   .msg-messages::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 99px; }
+  .msg-layout {
+  height: calc(100vh - 112px) !important;
+  overflow: hidden !important;
+}
 
+.msg-chat {
+  height: 100% !important;
+}
+
+.msg-messages {
+  min-height: 0 !important;
+}
   /* date separator */
   .msg-date-sep { text-align: center; margin: 12px 0 8px; }
   .msg-date-sep span { font-size: 10.5px; color: #B0B7C3; background: #F4F5FA; padding: 3px 10px; border-radius: 99px; }
@@ -176,6 +187,7 @@ export default function MessagerieePage() {
   const messagesEndRef = useRef(null);
   const textareaRef    = useRef(null);
   const typingTimer    = useRef(null);
+  const fileInputRef   = useRef(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
@@ -233,6 +245,31 @@ export default function MessagerieePage() {
     setInputText((prev) => prev + emoji);
     setShowEmoji(false);
     textareaRef.current?.focus();
+  };
+
+  const handleAttachFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeContact) return;
+
+    const sizeKo = Math.max(1, Math.round(file.size / 1024));
+    const msg = {
+      id: Date.now(),
+      from: "me",
+      text: "Fichier joint",
+      time: timeNow(),
+      date: "Aujourd'hui",
+      file: {
+        name: file.name,
+        size: `${sizeKo} Ko`,
+      },
+    };
+
+    setConversations((prev) => ({
+      ...prev,
+      [activeContact.id]: [...(prev[activeContact.id] || []), msg],
+    }));
+
+    e.target.value = "";
   };
 
   const filteredContacts = CONTACTS.filter((c) =>
@@ -333,28 +370,7 @@ export default function MessagerieePage() {
                 </div>
               </div>
             </div>
-            <div className="msg-chat-actions">
-              {/* Phone */}
-              <button className="msg-action-btn" title="Appel">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 2h3l1.5 3.5-1.8 1.1a8 8 0 004.7 4.7L11.5 9.5 15 11v3a1 1 0 01-1 1A13 13 0 012 3a1 1 0 011-1z" stroke="#6B7280" strokeWidth="1.3" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              {/* Video */}
-              <button className="msg-action-btn" title="Vidéo">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="4" width="9" height="8" rx="1.5" stroke="#6B7280" strokeWidth="1.3"/>
-                  <path d="M10 7l5-3v8l-5-3V7z" stroke="#6B7280" strokeWidth="1.3" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              {/* Info */}
-              <button className="msg-action-btn" title="Infos">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6.5" stroke="#6B7280" strokeWidth="1.3"/>
-                  <path d="M8 7v5M8 5.5v.01" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </button>
-            </div>
+
           </div>
 
           {/* Messages */}
@@ -459,7 +475,18 @@ export default function MessagerieePage() {
                 onBlur={() => setInputFocused(false)}
               />
               <button className="msg-emoji-btn" onClick={() => setShowEmoji((v) => !v)}>😊</button>
-              <button className="msg-input-attach">
+              <input
+                ref={fileInputRef}
+                type="file"
+                style={{ display: "none" }}
+                onChange={handleAttachFile}
+              />
+              <button
+                className="msg-input-attach"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Joindre un fichier"
+              >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <path d="M14 8.5l-5.5 5.5a4 4 0 01-5.66-5.66L8 3a2.5 2.5 0 013.54 3.54L6 12a1 1 0 01-1.41-1.41L9.5 5.5"
                     stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>

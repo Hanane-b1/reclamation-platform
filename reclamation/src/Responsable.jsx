@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import MessagerieePage, { MSG_CSS } from "./MessagerieePage";
+import { ticketsAPI } from "./api";
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -315,6 +316,44 @@ const statutLabel = { cours:"En cours", resolu:"Résolu", attente:"En attente" }
 const INTERVENANTS_INTERNES = ["Zakaria A.", "Sarah L.", "Aya S.", "Karim A.", "Omar A.", "Employé IT", "Responsable RH"];
 const INTERVENANTS_EXTERNES = ["Société TechFix", "Maintenance Pro", "Transport Express", "Cabinet Comptable Externe", "Sécurité Plus"];
 
+// IDs exemples des intervenants internes dans la base.
+// Si les IDs sont différents chez vous, change seulement les nombres ici.
+const INTERVENANT_IDS = {
+  "Zakaria A.": 2,
+  "Sarah L.": 3,
+  "Aya S.": 4,
+  "Karim A.": 5,
+  "Omar A.": 6,
+  "Employé IT": 7,
+  "Responsable RH": 8,
+};
+
+const normalizeTicket = (t) => ({
+  id: String(t.id),
+  apiId: t.id,
+  titre: t.titre || "Sans titre",
+  service: t.service || "Informatique",
+  priorite: t.priorite || "normal",
+  statut: t.statut || "attente",
+  date: t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "—",
+  assign: t.assigned_to?.nom || t.assignedTo?.nom || "Non assigné",
+  assignType: "interne",
+  desc: t.description || "Aucune description.",
+  comments: (t.commentaires || []).map((c) => ({
+    author: c.user?.nom || "Utilisateur",
+    time: c.created_at ? new Date(c.created_at).toLocaleString("fr-FR") : "—",
+    body: c.contenu || "",
+  })),
+  history: [
+    {
+      action: "Ticket chargé depuis Laravel API",
+      who: t.created_by?.nom || t.createdBy?.nom || "Employé",
+      time: t.created_at ? new Date(t.created_at).toLocaleString("fr-FR") : "—",
+      color: "#4F46E5",
+    },
+  ],
+});
+
 // ── BOT RESPONSE ──────────────────────────────────────────
 const getBotResponse = (msg, tickets) => {
   const m = msg.toLowerCase();
@@ -488,7 +527,7 @@ const OverviewPage = ({ tickets, setActivePage, setFilterService }) => {
           { label:"URGENTS",        value:urgent,  sub:"Action requise", subType:urgent>0?"red":"green" },
           { label:"EN COURS",       value:cours,   sub:"En traitement",  subType:"" },
           { label:"EN ATTENTE",     value:attente, sub:"À assigner",     subType:attente>0?"red":"green" },
-          { label:"RÉSOLUS",        value:resolus, sub:`${Math.round((resolus/tickets.length)*100)}% résolution`, subType:"green", hl:true },
+          { label:"RÉSOLUS",        value:resolus, sub:`${tickets.length ? Math.round((resolus/tickets.length)*100) : 0}% résolution`, subType:"green", hl:true },
         ].map(s => (
           <div key={s.label} className={`stat-card${s.hl?" highlight":""}`} onClick={() => setActivePage("tickets")}>
             <div className="stat-label">{s.label}</div>
@@ -542,12 +581,16 @@ const OverviewPage = ({ tickets, setActivePage, setFilterService }) => {
 };
 
 // ── TICKETS PAGE ──────────────────────────────────────────
-const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit }) => {
+const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refreshTickets }) => {
   const [filterStatut,   setFilterStatut]   = useState("tous");
   const [filterService,  setFilterService]  = useState(filterServiceInit || "tous");
   const [filterPriorite, setFilterPriorite] = useState("tous");
   const [searchQ,        setSearchQ]        = useState("");
   const [selected,       setSelected]       = useState(null);
+    
+  useEffect(() => {
+    setFilterService(filterServiceInit || "tous");
+  }, [filterServiceInit]);
 
   const filtered = tickets.filter(t => {
     return (filterStatut   === "tous" || t.statut   === filterStatut)
@@ -556,26 +599,62 @@ const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit }) => {
         && (t.titre.toLowerCase().includes(searchQ.toLowerCase()) || t.id.toLowerCase().includes(searchQ.toLowerCase()) || t.service.toLowerCase().includes(searchQ.toLowerCase()));
   });
 
-  const updateStatut = (id, val) => {
-    setTickets(p => p.map(t => t.id === id ? { ...t, statut: val, history: [...t.history, { action:`Statut → ${statutLabel[val]}`, who:"Responsable", time:"À l'instant", color:"#4F46E5" }] } : t));
-    if (selected?.id === id) setSelected(p => ({ ...p, statut: val }));
-    showToast("✅ Statut mis à jour !");
+  const getApiId = (id) => tickets.find(t => t.id === id)?.apiId || id;
+
+  const updateStatut = async (id, val) => {
+    try {
+      await ticketsAPI.updateStatus(getApiId(id), val);
+      setTickets(p => p.map(t => t.id === id ? { ...t, statut: val, history: [...(t.history || []), { action:`Statut → ${statutLabel[val]}`, who:"Responsable", time:"À l'instant", color:"#4F46E5" }] } : t));
+      if (selected?.id === id) setSelected(p => ({ ...p, statut: val }));
+      showToast("✅ Statut mis à jour dans Laravel !");
+      refreshTickets?.();
+    } catch (err) {
+      console.error(err);
+      showToast("❌ Erreur statut : vérifiez le token/login");
+    }
   };
-  const updatePriorite = (id, val) => {
-    setTickets(p => p.map(t => t.id === id ? { ...t, priorite: val, history: [...t.history, { action:`Priorité → ${val}`, who:"Responsable", time:"À l'instant", color:"#EF4444" }] } : t));
-    if (selected?.id === id) setSelected(p => ({ ...p, priorite: val }));
-    showToast("⚡ Priorité mise à jour !");
+
+  const updatePriorite = async (id, val) => {
+    try {
+      await ticketsAPI.updatePriority(getApiId(id), val);
+      setTickets(p => p.map(t => t.id === id ? { ...t, priorite: val, history: [...(t.history || []), { action:`Priorité → ${val}`, who:"Responsable", time:"À l'instant", color:"#EF4444" }] } : t));
+      if (selected?.id === id) setSelected(p => ({ ...p, priorite: val }));
+      showToast("⚡ Priorité mise à jour dans Laravel !");
+      refreshTickets?.();
+    } catch (err) {
+      console.error(err);
+      showToast("❌ Erreur priorité : vérifiez le token/login");
+    }
   };
-  const updateAssign = (id, assign, assignType) => {
-    setTickets(p => p.map(t => t.id === id ? { ...t, assign, assignType, history: [...t.history, { action:`Assigné à → ${assign} (${assignType})`, who:"Responsable", time:"À l'instant", color:"#10B981" }] } : t));
-    if (selected?.id === id) setSelected(p => ({ ...p, assign, assignType }));
-    showToast("👤 Assignation mise à jour !");
+
+  const updateAssign = async (id, assign, assignType) => {
+    try {
+      const userId = INTERVENANT_IDS[assign];
+      if (assignType === "interne" && userId) {
+        await ticketsAPI.assign(getApiId(id), userId);
+      }
+      setTickets(p => p.map(t => t.id === id ? { ...t, assign, assignType, history: [...(t.history || []), { action:`Assigné à → ${assign} (${assignType})`, who:"Responsable", time:"À l'instant", color:"#10B981" }] } : t));
+      if (selected?.id === id) setSelected(p => ({ ...p, assign, assignType }));
+      showToast(assignType === "externe" ? "👤 Assignation externe sauvegardée côté interface" : "👤 Assignation mise à jour dans Laravel !");
+      refreshTickets?.();
+    } catch (err) {
+      console.error(err);
+      showToast("❌ Erreur assignation : vérifiez ID intervenant");
+    }
   };
-  const addComment = (id, body) => {
-    const nc = { author:"Responsable", time:"À l'instant", body };
-    setTickets(p => p.map(t => t.id === id ? { ...t, comments:[...t.comments, nc], history:[...t.history, { action:"Commentaire ajouté", who:"Responsable", time:"À l'instant", color:"#10B981" }] } : t));
-    if (selected?.id === id) setSelected(p => ({ ...p, comments:[...p.comments, nc] }));
-    showToast("💬 Commentaire envoyé !");
+
+  const addComment = async (id, body) => {
+    try {
+      await ticketsAPI.addComment(getApiId(id), body);
+      const nc = { author:"Responsable", time:"À l'instant", body };
+      setTickets(p => p.map(t => t.id === id ? { ...t, comments:[...(t.comments || []), nc], history:[...(t.history || []), { action:"Commentaire ajouté", who:"Responsable", time:"À l'instant", color:"#10B981" }] } : t));
+      if (selected?.id === id) setSelected(p => ({ ...p, comments:[...(p.comments || []), nc] }));
+      showToast("💬 Commentaire envoyé dans Laravel !");
+      refreshTickets?.();
+    } catch (err) {
+      console.error(err);
+      showToast("❌ Erreur commentaire");
+    }
   };
 
   return (
@@ -689,7 +768,8 @@ const pageTitles = { overview:"Vue d'ensemble — Tous les services", tickets:"T
 export default function Responsable() {
   const navigate = useNavigate();
   const [activePage,      setActivePage]      = useState("overview");
-  const [tickets,         setTickets]         = useState(ALL_TICKETS);
+  const [tickets,         setTickets]         = useState([]);
+  const [loadingTickets,  setLoadingTickets]  = useState(true);
   const [notifs,          setNotifs]          = useState(NOTIFS_INIT);
   const [showNotifs,      setShowNotifs]      = useState(false);
   const [toast,           setToast]           = useState(null);
@@ -706,6 +786,24 @@ export default function Responsable() {
     clearTimeout(toastRef.current);
     toastRef.current = setTimeout(() => setToast(null), 2800);
   };
+
+  const fetchTickets = async () => {
+    try {
+      setLoadingTickets(true);
+      const data = await ticketsAPI.getAll();
+      setTickets(Array.isArray(data) ? data.map(normalizeTicket) : []);
+    } catch (err) {
+      console.error(err);
+      setTickets([]);
+      showToast("⚠️ Impossible de charger les tickets : connectez-vous d'abord");
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
   useEffect(() => {
     const h = e => { if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false); };
@@ -727,7 +825,7 @@ export default function Responsable() {
   const renderPage = () => {
     switch (activePage) {
       case "overview": return <OverviewPage tickets={tickets} setActivePage={setActivePage} setFilterService={goToServiceTickets}/>;
-      case "tickets":  return <TicketsPage  tickets={tickets} setTickets={setTickets} showToast={showToast} filterServiceInit={filterService}/>;
+      case "tickets":  return <TicketsPage  tickets={tickets} setTickets={setTickets} showToast={showToast} filterServiceInit={filterService} refreshTickets={fetchTickets}/>;
       case "activite": return <ActivitePage tickets={tickets}/>;
       case "chatbot":  return <ChatbotPage  tickets={tickets}/>;
       default:         return <OverviewPage tickets={tickets} setActivePage={setActivePage} setFilterService={goToServiceTickets}/>;
@@ -803,7 +901,7 @@ export default function Responsable() {
               </button>
             </div>
           </header>
-          <div className="page-body">{renderPage()}</div>
+          <div className="page-body">{loadingTickets && activePage !== "chatbot" ? <div className="card" style={{ color:"#6B7280", fontSize:13 }}>Chargement des réclamations depuis Laravel...</div> : renderPage()}</div>
         </div>
       </div>
       {toast && <div className="toast">{toast}</div>}
