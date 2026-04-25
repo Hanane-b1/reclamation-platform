@@ -289,9 +289,9 @@ const ALL_TICKETS = [
   // Finance
   { id:"ID-97650", titre:"Facture incorrecte",           service:"Finance",      priorite:"normal", statut:"attente", date:"16/04/2026", assign:"Omar A.", assignType:"interne",    desc:"Facture fournisseur avec montant erroné.",  comments:[], history:[{action:"Ticket créé",who:"Comptable",time:"16/04",color:"#4F46E5"}] },
   { id:"ID-96800", titre:"Retard paiement fournisseur",  service:"Finance",      priorite:"urgent", statut:"cours",   date:"11/04/2026", assign:"Omar A.", assignType:"interne",    desc:"Fournisseur X relance pour paiement.",      comments:[{author:"Omar A.",time:"11/04",body:"Virement initié, 3-5 jours ouvrés."}], history:[{action:"Ticket créé",who:"Finance",time:"11/04",color:"#4F46E5"},{action:"En cours",who:"Omar A.",time:"11/04",color:"#F59E0B"}] },
-  // Maintenance
-  { id:"ID-97500", titre:"Climatisation en panne",       service:"Maintenance",  priorite:"normal", statut:"resolu",  date:"15/04/2026", assign:"Omar A.", assignType:"interne",    desc:"Climatisation open space hors service.",    comments:[{author:"Omar A.",time:"15/04",body:"Technicien intervenu, résolu."}], history:[{action:"Ticket créé",who:"Employé",time:"15/04",color:"#4F46E5"},{action:"Résolu",who:"Omar A.",time:"16/04",color:"#10B981"}] },
-  { id:"ID-96100", titre:"Ascenseur en panne",           service:"Maintenance",  priorite:"urgent", statut:"cours",   date:"07/04/2026", assign:"Omar A.", assignType:"interne",    desc:"Ascenseur bloqué entre 2e et 3e étage.",   comments:[{author:"Omar A.",time:"07/04",body:"Technicien spécialisé contacté."}], history:[{action:"Ticket créé",who:"Sécurité",time:"07/04",color:"#4F46E5"},{action:"Urgent déclaré",who:"Resp.",time:"07/04",color:"#EF4444"}] },
+  // Externe
+  { id:"ID-97500", titre:"Climatisation en panne",       service:"Externe",  priorite:"normal", statut:"resolu",  date:"15/04/2026", assign:"Prestataire externe", assignType:"externe",    desc:"Climatisation open space hors service.",    comments:[{author:"Omar A.",time:"15/04",body:"Technicien intervenu, résolu."}], history:[{action:"Ticket créé",who:"Employé",time:"15/04",color:"#4F46E5"},{action:"Résolu",who:"Omar A.",time:"16/04",color:"#10B981"}] },
+  { id:"ID-96100", titre:"Ascenseur en panne",           service:"Externe",  priorite:"urgent", statut:"cours",   date:"07/04/2026", assign:"Prestataire externe", assignType:"externe",    desc:"Ascenseur bloqué entre 2e et 3e étage.",   comments:[{author:"Omar A.",time:"07/04",body:"Technicien spécialisé contacté."}], history:[{action:"Ticket créé",who:"Sécurité",time:"07/04",color:"#4F46E5"},{action:"Urgent déclaré",who:"Resp.",time:"07/04",color:"#EF4444"}] },
 ];
 
 const SERVICES_META = [
@@ -299,7 +299,8 @@ const SERVICES_META = [
   { name:"RH",           icon:"👥", color:"#10B981" },
   { name:"Logistique",   icon:"📦", color:"#F59E0B" },
   { name:"Finance",      icon:"💰", color:"#8B5CF6" },
-  { name:"Maintenance",  icon:"🔧", color:"#EF4444" },
+  { name:"Externe",      icon:"🌐", color:"#EF4444" },
+
 ];
 
 const NOTIFS_INIT = [
@@ -314,7 +315,7 @@ const NOTIFS_INIT = [
 const statutLabel = { cours:"En cours", resolu:"Résolu", attente:"En attente" };
 
 const INTERVENANTS_INTERNES = ["Zakaria A.", "Sarah L.", "Aya S.", "Karim A.", "Omar A.", "Employé IT", "Responsable RH"];
-const INTERVENANTS_EXTERNES = ["Société TechFix", "Maintenance Pro", "Transport Express", "Cabinet Comptable Externe", "Sécurité Plus"];
+const INTERVENANTS_EXTERNES = ["Société TechFix", "Prestataire externe", "Transport Express", "Cabinet Comptable Externe", "Sécurité Plus"];
 
 // IDs exemples des intervenants internes dans la base.
 // Si les IDs sont différents chez vous, change seulement les nombres ici.
@@ -328,17 +329,21 @@ const INTERVENANT_IDS = {
   "Responsable RH": 8,
 };
 
-const normalizeTicket = (t) => ({
-  id: String(t.id),
-  apiId: t.id,
-  titre: t.titre || "Sans titre",
-  service: t.service || "Informatique",
-  priorite: t.priorite || "normal",
-  statut: t.statut || "attente",
-  date: t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "—",
-  assign: t.assigned_to?.nom || t.assignedTo?.nom || "Non assigné",
-  assignType: "interne",
-  desc: t.description || "Aucune description.",
+const normalizeTicket = (t) => {
+  const serviceName = t.service || "Informatique";
+  const isExterne = serviceName === "Maintenance" || serviceName === "Externe";
+
+  return {
+    id: String(t.id),
+    apiId: t.id,
+    titre: t.titre || "Sans titre",
+    service: isExterne ? "Externe" : serviceName,
+    priorite: t.priorite || "normal",
+    statut: t.statut || "attente",
+    date: t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "—",
+    assign: isExterne ? "Prestataire externe" : (t.assigned_to?.nom || t.assignedTo?.nom || "Non assigné"),
+    assignType: isExterne ? "externe" : "interne",
+    desc: t.description || "Aucune description.",
   comments: (t.commentaires || []).map((c) => ({
     author: c.user?.nom || "Utilisateur",
     time: c.created_at ? new Date(c.created_at).toLocaleString("fr-FR") : "—",
@@ -352,7 +357,8 @@ const normalizeTicket = (t) => ({
       color: "#4F46E5",
     },
   ],
-});
+  };
+};
 
 // ── BOT RESPONSE ──────────────────────────────────────────
 const getBotResponse = (msg, tickets) => {
@@ -394,11 +400,13 @@ const getBotResponse = (msg, tickets) => {
     return `📦 **Service Logistique :**\n${tickets.filter(t=>t.service==="Logistique").map(t=>`• **${t.id}** — ${t.titre} [${statutLabel[t.statut]}]`).join("\n")}`;
   if (m.includes("finance"))
     return `💰 **Service Finance :**\n${tickets.filter(t=>t.service==="Finance").map(t=>`• **${t.id}** — ${t.titre} [${statutLabel[t.statut]}]`).join("\n")}`;
-  if (m.includes("maintenance"))
-    return `🔧 **Service Maintenance :**\n${tickets.filter(t=>t.service==="Maintenance").map(t=>`• **${t.id}** — ${t.titre} [${statutLabel[t.statut]}]`).join("\n")}`;
-
+   if (m.includes("externe"))
+  return `🌐 **Service Externe :**\n${tickets
+    .filter(t => t.service === "Externe")
+    .map(t => `• **${t.id}** — ${t.titre} [${statutLabel[t.statut]}]`)
+    .join("\n")}`; 
   if (m.includes("aide")||m.includes("help")||m.includes("quoi"))
-    return `Je peux vous aider avec :\n\n🔍 **"Tickets urgents"** — tous services\n📊 **"Statistiques"** — bilan global\n📂 **"Par service"** — répartition\n🖥️ **"Informatique"** — tickets du service\n👥 **"RH"**, 📦 **"Logistique"**, 💰 **"Finance"**, 🔧 **"Maintenance"**\n⏳ **"En attente"** — tickets à traiter`;
+    return `Je peux vous aider avec :\n\n🔍 **"Tickets urgents"** — tous services\n📊 **"Statistiques"** — bilan global\n📂 **"Par service"** — répartition\n🖥️ **"Informatique"** — tickets du service\n👥 **"RH"**, 📦 **"Logistique"**, 💰 **"Finance"**, 🌐 **"Externe"**\n⏳ **"En attente"** — tickets à traiter`;
 
   if (m.includes("merci")||m.includes("shukran"))
     return "Avec plaisir ! 😊 N'hésitez pas si besoin.";
@@ -681,10 +689,10 @@ const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refres
         </div>
         <div style={{ overflowX:"auto" }}>
           <table className="tickets-table">
-            <thead><tr><th>ID</th><th>Titre</th><th>Service</th><th>Priorité</th><th>Statut</th><th>Type</th><th>Assigné</th><th>Date</th></tr></thead>
+            <thead><tr><th>ID</th><th>Titre</th><th>Service</th><th>Priorité</th><th>Statut</th><th>Assigné</th><th>Date</th></tr></thead>
             <tbody>
               {filtered.length === 0
-                ? <tr><td colSpan={8} style={{ textAlign:"center", padding:28, color:"#9CA3AF", fontSize:13 }}>Aucun ticket trouvé</td></tr>
+                ? <tr><td colSpan={7} style={{ textAlign:"center", padding:28, color:"#9CA3AF", fontSize:13 }}>Aucun ticket trouvé</td></tr>
                 : filtered.map(t => (
                   <tr key={t.id} onClick={() => setSelected(t)}>
                     <td style={{ fontFamily:"monospace", fontSize:11, color:"#9CA3AF" }}>{t.id}</td>
@@ -697,7 +705,6 @@ const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refres
                     </td>
                     <td><span className={`tbadge ${t.priorite==="urgent"?"urgent":"normal"}`}>{t.priorite}</span></td>
                     <td><span className={`tbadge ${t.statut}`}>{statutLabel[t.statut]}</span></td>
-                    <td><span className="tbadge normal">{t.assignType || "interne"}</span></td>
                     <td style={{ fontSize:12 }}>{t.assign}</td>
                     <td style={{ fontSize:12, color:"#9CA3AF" }}>{t.date}</td>
                   </tr>
@@ -727,11 +734,11 @@ const ActivitePage = ({ tickets }) => {
     { icon:"✅", bg:"#D1FAE5", text:<><strong>ID-96200</strong> — Congé validé [RH]</>,                          time:"09/04 11:00",        service:"RH" },
     { icon:"⚡", bg:"#FEF3C7", text:<><strong>ID-96800</strong> escaladé urgent [Finance]</>,                    time:"11/04 10:30",        service:"Finance" },
     { icon:"✅", bg:"#D1FAE5", text:<><strong>ID-97300</strong> — Imprimante résolue [Informatique]</>,           time:"14/04 11:00",        service:"Informatique" },
-    { icon:"🔴", bg:"#FEE2E2", text:<><strong>ID-96100</strong> — Ascenseur bloqué [Maintenance]</>,             time:"07/04 09:00",        service:"Maintenance" },
-    { icon:"✅", bg:"#D1FAE5", text:<><strong>ID-97500</strong> — Climatisation réparée [Maintenance]</>,         time:"16/04 14:00",        service:"Maintenance" },
+    { icon:"🔴", bg:"#FEE2E2", text:<><strong>ID-96100</strong> — Ascenseur bloqué [Externe]</>,             time:"07/04 09:00",        service:"Externe" },
+    { icon:"✅", bg:"#D1FAE5", text:<><strong>ID-97500</strong> — Climatisation réparée [Externe]</>,         time:"16/04 14:00",        service:"Externe" },
     { icon:"💬", bg:"#EEF2FF", text:<>Nouveau ticket <strong>ID-97650</strong> créé [Finance]</>,                time:"16/04 08:00",        service:"Finance" },
   ];
-  const serviceColor = { Informatique:"#4F46E5", RH:"#10B981", Logistique:"#F59E0B", Finance:"#8B5CF6", Maintenance:"#EF4444" };
+  const serviceColor = { Informatique:"#4F46E5", RH:"#10B981", Logistique:"#F59E0B", Finance:"#8B5CF6", Externe:"#EF4444" };
   return (
     <div className="card">
       <div className="card-title">Journal d'activité — Tous les services</div>
