@@ -136,6 +136,66 @@ const CSS = `
   .footer a { font-size: 11.5px; color: #9CA3AF; text-decoration: none; }
   .footer a:hover { color: #6B7280; }
   .footer-copy { font-size: 11.5px; color: #9CA3AF; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .navbar { padding: 0 32px; }
+    .page-header { padding: 48px 32px 36px; }
+    .page-title { font-size: 32px; }
+    .features-section { padding: 48px 32px; }
+    .features-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .cta-section { padding: 48px 32px; }
+    .cta-title { font-size: 28px; }
+    .footer { padding: 16px 32px; }
+  }
+
+  @media (max-width: 768px) {
+    .navbar { padding: 0 16px; flex-wrap: wrap; height: auto; gap: 12px; }
+    .navbar > div:nth-child(2) { display: none; }
+    .navbar > div:nth-child(3) { width: 100%; justify-content: flex-end; order: 3; }
+
+    .page-header { padding: 32px 16px 24px; }
+    .page-title { font-size: 26px; letter-spacing: -0.8px; }
+    .page-subtitle { font-size: 14px; }
+
+    .features-section { padding: 36px 16px; }
+    .features-grid { grid-template-columns: 1fr; gap: 16px; }
+    .feature-card { padding: 24px 18px; }
+    .feature-icon { width: 48px; height: 48px; font-size: 22px; }
+    .feature-title { font-size: 18px; }
+    .feature-desc { font-size: 13px; }
+    .benefit-item { margin-bottom: 10px; }
+    .benefit-text { font-size: 13px; }
+
+    .cta-section { padding: 36px 16px; }
+    .cta-title { font-size: 22px; }
+    .cta-desc { font-size: 14px; margin-bottom: 20px; }
+    .cta-buttons { flex-direction: column; gap: 10px; }
+    .btn-cta { width: 100%; padding: 11px 16px; font-size: 13px; }
+
+    .footer { padding: 14px 16px; flex-direction: column; gap: 10px; text-align: center; }
+  }
+
+  @media (max-width: 480px) {
+    .navbar > div:nth-child(3) { gap: 6px; }
+    .btn-connect, .btn-primary-nav { padding: 6px 12px; font-size: 12px; width: 48%; }
+
+    .page-header { padding: 20px 12px 16px; }
+    .page-title { font-size: 20px; }
+    .page-subtitle { font-size: 12px; }
+
+    .features-section { padding: 24px 12px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .feature-card { padding: 16px 14px; }
+    .feature-icon { width: 40px; height: 40px; font-size: 18px; margin-bottom: 12px; }
+    .feature-title { font-size: 16px; margin-bottom: 8px; }
+    .feature-desc { font-size: 12px; margin-bottom: 12px; }
+
+    .cta-section { padding: 24px 12px; }
+    .cta-title { font-size: 18px; }
+
+    .footer { padding: 10px; font-size: 10px; }
+  }
 `;
 
 const Logo = () => (

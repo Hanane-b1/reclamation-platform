@@ -257,6 +257,95 @@ const CSS = `
   .footer-links a { font-size: 11.5px; color: #6B7280; text-decoration: none; transition: color 0.2s; }
   .footer-links a:hover { color: #0F1117; }
   .footer-copy { font-size: 11.5px; color: #6B7280; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .demo-nav { padding: 0 32px; }
+    .demo-hero { padding: 60px 32px; }
+    .demo-hero-inner { gap: 40px; grid-template-columns: 1fr; }
+    .demo-hero-title { font-size: 44px; }
+    .demo-section { padding: 80px 32px; }
+    .steps-grid { grid-template-columns: repeat(2, 1fr); }
+    .roles-grid { grid-template-columns: repeat(2, 1fr); }
+    .demo-cta-inner { grid-template-columns: 1fr; gap: 40px; padding: 48px 32px; }
+    .demo-footer { padding: 20px 32px; }
+  }
+
+  @media (max-width: 768px) {
+    .demo-nav { padding: 0 16px; height: 56px; flex-wrap: wrap; }
+    .demo-nav-links { display: none; }
+    .demo-nav-btns { width: 100%; justify-content: flex-end; gap: 8px; }
+    .nav-btn-ghost, .nav-btn-solid { padding: 7px 12px; font-size: 11.5px; }
+
+    .demo-hero { padding: 40px 16px; min-height: auto; }
+    .demo-hero-inner { grid-template-columns: 1fr; }
+    .demo-hero-glow { display: none; }
+    .demo-hero-title { font-size: 32px; letter-spacing: -1px; }
+    .demo-hero-sub { font-size: 13px; }
+    .demo-hero-ctas { flex-direction: column; gap: 10px; }
+    .hero-cta-primary, .hero-cta-ghost { padding: 12px 18px; font-size: 13px; }
+    .demo-hero-metrics { flex-direction: column; gap: 16px; padding-top: 16px; }
+    .demo-metric-val { font-size: 22px; }
+
+    .demo-panel-wrap { margin-top: 20px; }
+    .demo-panel-title { font-size: 9px; }
+    .demo-ticket-card { padding: 12px 14px; }
+    .dtc-title { font-size: 11.5px; }
+    .dtc-sub { font-size: 10px; }
+
+    .demo-section { padding: 50px 16px; }
+    .section-title { font-size: 28px; letter-spacing: -0.8px; }
+    .section-sub { font-size: 13px; }
+    .steps-grid { grid-template-columns: 1fr; gap: 1px; }
+    .step-card { padding: 20px 18px; }
+    .step-title { font-size: 14px; }
+    .step-desc { font-size: 12px; }
+
+    .roles-section { padding: 0 16px 60px; }
+    .roles-grid { grid-template-columns: 1fr; gap: 14px; }
+    .role-card { padding: 22px 18px; }
+    .role-title { font-size: 18px; }
+    .role-desc { font-size: 12px; }
+    .role-feat { font-size: 11.5px; }
+
+    .demo-cta-section { padding: 0 16px 60px; }
+    .demo-cta-inner { padding: 40px 20px; border-radius: 18px; }
+    .demo-cta-inner::before, .demo-cta-inner::after { display: none; }
+    .demo-cta-title { font-size: 28px; letter-spacing: -0.8px; }
+    .demo-cta-sub { font-size: 13px; }
+    .demo-cta-btns { width: 100%; }
+    .cta-btn-main, .cta-btn-sec { width: 100%; padding: 12px 16px; font-size: 13px; }
+
+    .demo-footer { padding: 16px; flex-direction: column; gap: 12px; text-align: center; }
+    .footer-links { flex-direction: column; gap: 8px; }
+  }
+
+  @media (max-width: 480px) {
+    .demo-nav-btns { flex-direction: column; gap: 6px; }
+    .nav-btn-ghost, .nav-btn-solid { font-size: 10px; padding: 6px 10px; width: 100%; }
+
+    .demo-hero { padding: 28px 12px; }
+    .demo-hero-title { font-size: 24px; }
+    .demo-hero-sub { font-size: 12px; }
+    .hero-cta-primary, .hero-cta-ghost { padding: 11px 16px; }
+    .demo-metric-val { font-size: 18px; }
+
+    .demo-section { padding: 36px 12px; }
+    .section-title { font-size: 22px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .step-card { padding: 16px 14px; }
+    .step-icon { width: 36px; height: 36px; font-size: 16px; }
+
+    .roles-grid { grid-template-columns: 1fr; }
+    .role-card { padding: 18px 16px; }
+    .role-title { font-size: 16px; }
+
+    .demo-cta-inner { padding: 32px 16px; }
+    .demo-cta-title { font-size: 22px; }
+    .cta-btn-main, .cta-btn-sec { padding: 11px 14px; font-size: 12px; }
+
+    .demo-footer { padding: 12px; font-size: 10px; }
+  }
 `;
 
 const Logo = () => (

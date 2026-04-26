@@ -92,52 +92,35 @@ $users = User::where('id', '!=', $meId)
         }));
     }
 
-    public function send(Request $request)
-    {
-        $request->validate([
-            'receiver_id' => 'required|exists:users,id',
-            'contenu' => 'nullable|string',
-            'file' => 'nullable|file|max:5120',
-        ]);
+public function send(Request $request)
+{
+    $request->validate([
+        'receiver_id' => 'required|exists:users,id',
+        'contenu' => 'required|string',
+    ]);
 
-        $meId = $this->currentUserId();
+    $meId = $this->currentUserId();
 
-        $fileName = null;
-        $fileSize = null;
-        $filePath = null;
+    $message = Message::create([
+        'sender_id' => $meId,
+        'receiver_id' => $request->receiver_id,
+        'contenu' => $request->contenu,
+        'lu' => false,
+    ]);
 
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
+    return response()->json([
+        'id' => $message->id,
+        'from' => 'me',
+        'sender_id' => $message->sender_id,
+        'receiver_id' => $message->receiver_id,
+        'contenu' => $message->contenu,
+        'lu' => false,
+        'time' => $message->created_at->format('H:i'),
+        'date' => "Aujourd'hui",
+    ], 201);
+}
 
-            $fileName = $file->getClientOriginalName();
-            $fileSize = max(1, round($file->getSize() / 1024)) . ' Ko';
-            $filePath = $file->store('messages', 'public');
-        }
 
-        $message = Message::create([
-            'sender_id' => $meId,
-            'receiver_id' => $request->receiver_id,
-            'contenu' => $request->contenu ?: 'Fichier joint',
-            'fichier_nom' => $fileName,
-            'fichier_taille' => $fileSize,
-            'file_path' => $filePath,
-            'lu' => false,
-        ]);
-
-        return response()->json([
-            'id' => $message->id,
-            'from' => 'me',
-            'sender_id' => $message->sender_id,
-            'receiver_id' => $message->receiver_id,
-            'contenu' => $message->contenu,
-            'fichier_nom' => $message->fichier_nom,
-            'fichier_taille' => $message->fichier_taille,
-            'file_path' => $message->file_path, // IMPORTANT
-            'lu' => false,
-            'time' => $message->created_at->format('H:i'),
-            'date' => "Aujourd'hui",
-        ], 201);
-    }
 
     public function unreadCount()
     {

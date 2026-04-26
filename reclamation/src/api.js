@@ -1,7 +1,9 @@
 const BASE_URL = "http://localhost:8000/api";
 
+const getToken = () => localStorage.getItem("bayan_token");
+
 const getHeaders = () => {
-  const token = localStorage.getItem("bayan_token");
+  const token = getToken();
   return {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -18,7 +20,6 @@ const apiFetch = async (endpoint, options = {}) => {
   const data = await response.json();
 
   if (!response.ok) {
-    // Laravel validation errors come in data.errors (object), not data.message
     if (data.errors) {
       const messages = Object.values(data.errors).flat().join(" | ");
       throw new Error(messages);
@@ -109,39 +110,43 @@ export const usersAPI = {
     }),
 };
 
-// ── MESSAGES API ──────────────────────────────────────────────────────────
 export const messagesAPI = {
-  // Liste des contacts avec dernier message + non lus
   getContacts: () => apiFetch("/messages/contacts"),
 
-  // Historique complet de la conversation avec un user
   getConversation: (userId) => apiFetch(`/messages/${userId}`),
 
-  // Envoyer un message
   send: (receiverId, contenu, file = null) => {
-  const formData = new FormData();
-  formData.append("receiver_id", receiverId);
-  formData.append("contenu", contenu);
+    const token = localStorage.getItem("bayan_token");
 
-  if (file) {
-    formData.append("file", file);
-  }
+    const formData = new FormData();
+    formData.append("receiver_id", receiverId);
+    formData.append("contenu", contenu);
 
-  const token = localStorage.getItem("bayan_token");
+    if (file) {
+      formData.append("file", file);
+    }
 
-  return fetch("http://localhost:8000/api/messages", {
-    method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
-  }).then(async (res) => {
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Erreur serveur");
-    return data;
-  });
-},
- 
- 
+    return fetch(`${BASE_URL}/messages`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    }).then(async (res) => {
+      const data = await res.json();
 
-  // Nombre total de messages non lus
+      if (!res.ok) {
+        if (data.errors) {
+          const messages = Object.values(data.errors).flat().join(" | ");
+          throw new Error(messages);
+        }
+        throw new Error(data.message || "Erreur serveur");
+      }
+
+      return data;
+    });
+  },
+
   getUnreadCount: () => apiFetch("/messages/unread"),
 };

@@ -188,7 +188,93 @@ const CSS = `
   /* TOAST */
   .emp-toast { position: fixed; bottom: 28px; right: 28px; background: #1C1C2E; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 999; box-shadow: 0 8px 28px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; animation: empSlideUp 0.3s ease; }
   @keyframes empSlideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .emp-sidebar { width: 180px; }
+    .emp-main { margin-left: 180px; }
+    .emp-topbar { padding: 0 20px; }
+    .emp-page-body { padding: 20px; }
+    .emp-search-bar { width: 220px; }
+    .emp-kanban { gap: 12px; }
+  }
+
+  @media (max-width: 768px) {
+    /* SIDEBAR → bottom nav */
+    .emp-sidebar {
+      width: 100%; height: 60px; top: auto; bottom: 0;
+      flex-direction: row; border-right: none; border-top: 1px solid rgba(0,0,0,0.08);
+      z-index: 100;
+    }
+    .emp-sidebar-logo { display: none; }
+    .emp-sidebar-user { display: none; }
+    .emp-sidebar-nav {
+      flex-direction: row; padding: 0; gap: 0; overflow-x: auto;
+      justify-content: space-around; width: 100%;
+    }
+    .emp-nav-item { flex-direction: column; gap: 2px; padding: 8px 6px;
+      font-size: 9px; border-radius: 0; min-width: 50px; }
+    .emp-nav-section { display: none; }
+
+    /* MAIN */
+    .emp-main { margin-left: 0; padding-bottom: 60px; }
+
+    /* TOPBAR */
+    .emp-topbar { padding: 0 12px; height: 52px; gap: 8px; }
+    .emp-topbar-title { font-size: 14px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .emp-search-bar { width: 100%; max-width: 160px; font-size: 12px; padding: 6px 10px; }
+    .emp-topbar-right { gap: 6px; }
+    .emp-icon-btn { width: 32px; height: 32px; }
+
+    /* PAGE BODY */
+    .emp-page-body { padding: 12px; }
+
+    /* FILTERS */
+    .emp-filters { gap: 6px; margin-bottom: 10px; }
+    .emp-filter-btn { padding: 5px 10px; font-size: 11px; }
+
+    /* KANBAN */
+    .emp-kanban { grid-template-columns: 1fr; gap: 12px; }
+    .emp-col-body { min-height: 300px; }
+
+    /* CARD */
+    .emp-card { padding: 10px 12px; }
+    .emp-card-title { font-size: 12px; }
+    .emp-pri-badge { font-size: 8.5px; padding: 2px 5px; }
+
+    /* DETAIL PANEL */
+    .emp-detail-panel {
+      width: 100%; max-width: 380px; border-radius: 16px 16px 0 0;
+      position: fixed; bottom: 0; right: 0; height: auto; max-height: 90vh;
+    }
+
+    /* MODAL */
+    .emp-modal { width: calc(100% - 24px); max-width: 500px; }
+
+    /* TOAST */
+    .emp-toast { bottom: 72px; right: 12px; left: 12px; font-size: 12px; }
+  }
+
+  @media (max-width: 480px) {
+    .emp-sidebar-nav { gap: 0; }
+    .emp-nav-item { font-size: 8px; min-width: 44px; padding: 6px 4px; }
+    .emp-topbar-title { max-width: 80px; font-size: 12px; }
+    .emp-search-bar { display: none; }
+
+    .emp-page-body { padding: 10px; }
+    .emp-kanban { grid-template-columns: 1fr; gap: 10px; }
+    .emp-col-body { min-height: 280px; }
+
+    .emp-card { padding: 8px 10px; }
+    .emp-card-title { font-size: 11px; }
+    .emp-tag { font-size: 9px; }
+    .emp-card-date { font-size: 9px; }
+
+    .emp-confirm-box { width: 90%; max-width: 340px; padding: 20px 18px; }
+    .emp-modal { width: calc(100% - 16px); padding: 16px; }
+  }
 `;
+
 
 // ── DATA ───────────────────────────────────────────────────────────────────
 const TICKETS_INIT = [

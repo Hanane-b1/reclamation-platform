@@ -180,6 +180,50 @@ const CSS = `
   .footer a { font-size: 11.5px; color: #9CA3AF; text-decoration: none; }
   .footer a:hover { color: #6B7280; }
   .footer-copy { font-size: 11.5px; color: #9CA3AF; }
+
+  /* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+
+/* TABLET (≤ 1024px) */
+@media (max-width: 1024px) {
+  .navbar { padding: 0 28px; }
+  .hero-section { padding: 60px 28px; }
+  .hero-title { font-size: 38px; }
+  .hero-subtitle { font-size: 17px; }
+  .mission-section { padding: 60px 28px; }
+  .values-section { padding: 60px 28px; }
+  .team-section { padding: 60px 28px; }
+  .cta-section { padding: 48px 28px; }
+  .footer { padding: 20px 28px; }
+  .stat-number { font-size: 38px; }
+  .values-grid { gap: 24px; }
+}
+
+/* MOBILE (≤ 768px) */
+@media (max-width: 768px) {
+  /* NAVBAR */
+  .navbar { padding: 0 18px; height: 54px; }
+  .navbar > div:nth-child(2) { display: none; }
+  .btn-connect { display: none; }
+  .btn-primary-nav { font-size: 12px; padding: 7px 12px; }
+
+  /* HERO */
+  .hero-section { padding: 48px 18px; }
+  .hero-title { font-size: 28px; margin-bottom: 16px; }
+  .hero-subtitle { font-size: 15px; }
+
+  /* MISSION */
+  .mission-section { padding: 48px 18px; }
+  .mission-title { font-size: 26px; margin-bottom: 20px; }
+  .mission-text { font-size: 15px; margin-bottom: 32px; }
+  .mission-stats { grid-template-columns: 1fr; gap: 24px; }
+  .stat-number { font-size: 42px; }
+
+  /* VALUES */
+  .values-section { padding: 48px 18px; }
+  .values-title { font-size: 26px; margin-bottom: 36px; }
+  .values-grid { grid-template-columns: 1fr; gap: 16px; }
+  .value-card { padding: 28px 20px; border-radius: 14px; }
+  .value-icon { width: 52px; height: 52px; font-size: 26px; margin-bot
 `;
 
 const Logo = () => (

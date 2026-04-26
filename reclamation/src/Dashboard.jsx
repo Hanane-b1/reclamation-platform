@@ -212,6 +212,106 @@ const CSS = `
   /* TOAST */
   .toast { position: fixed; bottom: 28px; right: 28px; background: #1C1C2E; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 999; box-shadow: 0 8px 28px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; animation: slideUp 0.3s ease; }
   @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+
+/* TABLET / SMALL LAPTOP (≤ 1024px) */
+@media (max-width: 1024px) {
+  .sidebar { width: 180px; }
+  .main-content { margin-left: 180px; }
+  .topbar { padding: 0 20px; }
+  .page-body { padding: 20px; }
+  .search-wrap { width: 220px; }
+  .stat-cards { grid-template-columns: repeat(3, 1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+  .bottom-row { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* MOBILE (≤ 768px) */
+@media (max-width: 768px) {
+  /* SIDEBAR → bottom nav */
+  .sidebar {
+    width: 100%; height: 60px;
+    top: auto; bottom: 0; left: 0; right: 0;
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    z-index: 100;
+  }
+  .sidebar-logo { display: none; }
+  .sidebar-user { display: none; }
+  .sidebar-nav {
+    flex-direction: row;
+    padding: 0; gap: 0;
+    overflow-x: auto;
+    justify-content: space-around;
+    width: 100%; align-items: center;
+  }
+  .nav-item {
+    flex-direction: column;
+    gap: 3px; padding: 8px 6px;
+    font-size: 9.5px; border-radius: 0;
+    min-width: 56px; align-items: center; justify-content: center;
+  }
+  .nav-item svg { width: 18px; height: 18px; }
+
+  /* MAIN */
+  .main-content { margin-left: 0; padding-bottom: 60px; }
+
+  /* TOPBAR */
+  .topbar { padding: 0 14px; height: 54px; gap: 8px; }
+  .topbar-title { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+  .search-wrap { width: 100%; max-width: 180px; }
+  .search-bar input { font-size: 12px; }
+
+  /* PAGE BODY */
+  .page-body { padding: 14px; }
+
+  /* STAT CARDS */
+  .stat-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-value { font-size: 22px; }
+
+  /* CHARTS */
+  .charts-row { grid-template-columns: 1fr; gap: 14px; }
+  .bottom-row { grid-template-columns: 1fr; gap: 14px; }
+
+  /* BAR CHART: moins de gap */
+  .bar-chart { gap: 10px; }
+  .bar { width: 7px; }
+
+  /* STATS PAGE */
+  .stats-grid { grid-template-columns: 1fr; }
+
+  /* TICKETS TABLE: scroll horizontal */
+  .tickets-toolbar { gap: 8px; }
+  .tickets-toolbar input { width: 100% !important; }
+  .filter-select { font-size: 11.5px; padding: 6px 8px; }
+  .tickets-count { display: none; }
+
+  /* TICKET DETAIL PANEL */
+  .detail-panel {
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* MODAL */
+  .modal-box { width: calc(100% - 28px); padding: 24px 18px; }
+
+  /* NOTIF DROPDOWN */
+  .notif-dropdown { right: -60px; width: 300px; }
+
+  /* TOAST */
+  .toast { bottom: 72px; right: 14px; left: 14px; font-size: 12px; }
+}
+
+/* SMALL MOBILE (≤ 380px) */
+@media (max-width: 380px) {
+  .stat-cards { grid-template-columns: 1fr; }
+  .nav-item { font-size: 8.5px; min-width: 48px; padding: 6px 4px; }
+  .topbar-title { max-width: 100px; }
+  .chart-card { padding: 16px 14px; }
+}
 `;
 
 // ── DATA ─────────────────────────────────────────────────

@@ -31,29 +31,33 @@ class TicketController extends Controller
 
     // POST /api/tickets — Employee creates ticket (always starts as "attente")
     public function store(Request $request)
-    {
-        $user = auth('api')->user();
+{
+    $user = auth('api')->user();
 
-        $request->validate([
-            'titre'       => 'required|string|max:255',
-            'service'     => 'required|string',
-            'description' => 'required|string',
-            'priorite'    => 'in:urgent,haute,normal,faible',
-            ]);
+    $request->validate([
+        'titre' => 'required|string|max:255',
+        'service' => 'required|string',
+        'description' => 'required|string',
+       'priorite' => 'nullable|in:urgent,haute,normal,faible',
+    ]);
 
-        $ticket = Ticket::create([
-            'titre'       => $request->titre,
-            'service'     => $request->service,
-            'description' => $request->description,
-            'priorite'    => $request->priorite ?? 'normal',
-            'statut'      => 'attente',   // always starts waiting
-            'created_by'  => $user?->id,
-            'assigned_to' => null,        // null until responsable assigns
-        ]);
 
-        return response()->json(['ticket' => $ticket->load('creator:id,nom,email')], 201);
-    }
+    $ticket = Ticket::create([
+        'titre' => $request->titre,
+        'service' => $request->service,
+        'description' => $request->description,
+        'priorite' => $request->priorite ?? 'normal',
+        'statut' => 'attente',
+        'created_by' => $user?->id,
+        'assigned_to' => null,
 
+
+    ]);
+
+    return response()->json([
+        'ticket' => $ticket->load('creator:id,nom,email')
+    ], 201);
+}
     // GET /api/tickets/{id}
     public function show($id)
     {

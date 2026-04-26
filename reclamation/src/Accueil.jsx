@@ -198,6 +198,175 @@ const CSS = `
   .footer a { font-size: 11.5px; color: #9CA3AF; text-decoration: none; }
   .footer a:hover { color: #6B7280; }
   .footer-copy { font-size: 11.5px; color: #9CA3AF; }
+
+  /* RESPONSIVE DESIGN */
+  @media (max-width: 1024px) {
+    .navbar { padding: 0 24px; }
+    .hero { margin: 20px 24px; padding: 40px 30px 35px; gap: 30px; }
+    .stats-bar { margin: 0 24px; grid-template-columns: repeat(2,1fr); padding: 24px 0; }
+    .feat-section { padding: 48px 24px 40px; }
+    .feat-grid { grid-template-columns: repeat(2,1fr); gap: 16px; }
+    .footer { padding: 16px 24px; flex-wrap: wrap; gap: 16px; }
+  }
+
+  @media (max-width: 768px) {
+    .navbar {
+      padding: 0 16px;
+      flex-wrap: wrap;
+      height: auto;
+      gap: 12px;
+    }
+    .navbar > div:nth-child(2) {
+      display: none;
+    }
+    .navbar > div:nth-child(3) {
+      width: 100%;
+      justify-content: flex-end;
+      order: 3;
+    }
+    .hero {
+      flex-direction: column;
+      margin: 16px;
+      padding: 32px 20px 28px;
+      gap: 24px;
+    }
+    h1.hero-title {
+      font-size: 32px;
+      line-height: 1.25;
+    }
+    .hero-desc {
+      font-size: 13px;
+      max-width: 100%;
+    }
+    .hero-ctas {
+      flex-direction: column;
+    }
+    .btn-cta-main, .btn-cta-sec {
+      width: 100%;
+      padding: 11px 16px;
+      font-size: 12.5px;
+    }
+    .hero-stats {
+      flex-direction: column;
+      gap: 20px;
+    }
+    .tickets-scene {
+      min-width: 100%;
+      height: 280px;
+    }
+    .tcard {
+      width: 100%;
+      max-width: 240px;
+      padding: 14px 16px;
+    }
+    .tcard.card1 {
+      left: 0;
+      transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) !important;
+    }
+    .tcard.card2 {
+      left: 0;
+      top: 138px;
+      transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) !important;
+    }
+    .stats-bar {
+      margin: 0 16px;
+      grid-template-columns: repeat(2,1fr);
+      padding: 20px 0;
+    }
+    .sbar-item {
+      padding: 0 12px;
+      border-right: none !important;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .sbar-item:nth-child(odd) { border-right: 1px solid rgba(255,255,255,0.07); }
+    .sbar-item:nth-child(3), .sbar-item:nth-child(4) { border-bottom: none; }
+    .sbar-num { font-size: 24px; }
+    .sbar-lbl { font-size: 9px; }
+    .feat-section { padding: 32px 16px 28px; }
+    .feat-heading h2 { font-size: 24px; }
+    .feat-grid { grid-template-columns: 1fr; gap: 14px; }
+    .fcard { padding: 20px 18px; }
+    .footer {
+      padding: 16px;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+    .footer > div { width: 100%; }
+    .footer > div:last-child {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .footer a { font-size: 10.5px; }
+  }
+
+  @media (max-width: 480px) {
+    .navbar {
+      padding: 0 12px;
+      min-height: 56px;
+    }
+    .btn-connect, .btn-primary-nav {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .hero {
+      margin: 12px;
+      padding: 24px 16px 20px;
+    }
+    h1.hero-title {
+      font-size: 24px;
+    }
+    .hero-badge {
+      font-size: 9px;
+      padding: 4px 9px;
+      margin-bottom: 16px;
+    }
+    .hero-desc {
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    .hero-ctas {
+      margin-top: 20px;
+    }
+    .hero-stats {
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .stat-num { font-size: 18px; }
+    .stat-lbl { font-size: 9px; }
+    .tickets-scene {
+      height: 250px;
+    }
+    .tcard {
+      max-width: 220px;
+      padding: 12px 14px;
+    }
+    .ttitle { font-size: 12px; }
+    .tsub { font-size: 10px; }
+    .tid { font-size: 9px; }
+    .tbadge { font-size: 7.5px; padding: 2px 6px; }
+    .tdivider { margin: 8px 0; }
+    .stats-bar {
+      margin: 0 12px;
+      gap: 8px;
+    }
+    .sbar-num { font-size: 20px; }
+    .sbar-lbl { font-size: 8px; }
+    .feat-section { padding: 24px 12px 20px; }
+    .feat-heading h2 { font-size: 20px; letter-spacing: -0.3px; }
+    .feat-accent { width: 28px; }
+    .fcard { padding: 16px 14px; }
+    .fname { font-size: 13.5px; }
+    .fdesc { font-size: 12px; }
+    .fcheck-text { font-size: 11.5px; }
+    .footer {
+      padding: 12px;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .footer-copy { font-size: 10px; }
+    .footer a { font-size: 10px; }
+  }
 `;
 
 const Logo = () => (

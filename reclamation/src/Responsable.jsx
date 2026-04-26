@@ -269,6 +269,7 @@ const CSS = `
     .detail-panel { width: 100vw; }
   }
 
+  
 `;
 
 // ── ALL TICKETS — TOUS LES SERVICES ──────────────────────
@@ -313,8 +314,13 @@ const NOTIFS_INIT = [
 ];
 
 const statutLabel = { cours:"En cours", resolu:"Résolu", attente:"En attente" };
-
-const INTERVENANTS_INTERNES = ["Zakaria A.", "Sarah L.", "Aya S.", "Karim A.", "Omar A.", "Employé IT", "Responsable RH"];
+const INTERVENANTS_INTERNES = [
+  "Karim Alami",
+  "Zakaria Achraf",
+  "Sarah Lemarié",
+  "Omar Almsaddek",
+  "Intervenant Test"
+];
 const INTERVENANTS_EXTERNES = ["Société TechFix", "Prestataire externe", "Transport Express", "Cabinet Comptable Externe", "Sécurité Plus"];
 
 // IDs exemples des intervenants internes dans la base.
@@ -341,8 +347,8 @@ const normalizeTicket = (t) => {
     priorite: t.priorite || "normal",
     statut: t.statut || "attente",
     date: t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "—",
-    assign: isExterne ? "Prestataire externe" : (typeof t.assigned_to === "object" ? t.assigned_to?.nom : null) || (typeof t.assignedTo === "object" ? t.assignedTo?.nom : null) || "Non assigné",
-    assignType: isExterne ? "externe" : "interne",
+    assign: t.assignee?.nom || t.assignee?.name || "Non assigné",
+    assignId: t.assignee?.id || t.assignee_id || t.assigned_to || null,
     desc: t.description || "Aucune description.",
   comments: (t.commentaires || []).map((c) => ({
     author: c.user?.nom || "Utilisateur",
@@ -428,27 +434,49 @@ const Logo = () => (
 
 // ── TICKET DETAIL PANEL ───────────────────────────────────
 const TicketDetail = ({ ticket, onClose, onUpdateStatut, onUpdatePriorite, onUpdateAssign, onAddComment, users = [] }) => {
-  const [comment,  setComment]  = useState("");
-  const [statut,   setStatut]   = useState(ticket.statut);
+  const [comment, setComment] = useState("");
+  const [statut, setStatut] = useState(ticket.statut);
   const [priorite, setPriorite] = useState(ticket.priorite);
-  const [assignType, setAssignType] = useState(ticket.assignType || "interne");
-  const [assign, setAssign] = useState(ticket.assign || INTERVENANTS_INTERNES[0]);
 
-  // Use real users from DB if available, fallback to static list
-  const internesFromDB = users.filter(u => u.role !== "admin").map(u => u.nom);
-  const internesOptions = internesFromDB.length > 0 ? internesFromDB : INTERVENANTS_INTERNES;
-  const assignOptions = assignType === "interne" ? internesOptions : INTERVENANTS_EXTERNES;
+  const assignableUsers = users.filter(
+    (u) => u.role === "employe" || u.role === "intervenant"
+  );
 
-  const changeAssignType = (type) => {
-    const firstValue = type === "interne" ? INTERVENANTS_INTERNES[0] : INTERVENANTS_EXTERNES[0];
-    setAssignType(type);
-    setAssign(firstValue);
-    onUpdateAssign(ticket.id, firstValue, type);
+  const getUserName = (u) => u?.nom || u?.name || "Utilisateur";
+
+  const findAssignedUser = () => {
+    if (ticket.assignId) {
+      const byId = assignableUsers.find(
+        (u) => String(u.id) === String(ticket.assignId)
+      );
+      if (byId) return byId;
+    }
+
+    return assignableUsers.find(
+      (u) =>
+        String(getUserName(u)).trim().toLowerCase() ===
+        String(ticket.assign || "").trim().toLowerCase()
+    );
   };
 
-  const changeAssign = (value) => {
-    setAssign(value);
-    onUpdateAssign(ticket.id, value, assignType);
+  const [assign, setAssign] = useState(() => {
+    const user = findAssignedUser();
+    return user ? String(user.id) : "";
+  });
+
+  useEffect(() => {
+    setStatut(ticket.statut);
+    setPriorite(ticket.priorite);
+
+    const user = findAssignedUser();
+    setAssign(user ? String(user.id) : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.id, ticket.assign, ticket.assignId, users]);
+
+  const changeAssign = (userId) => {
+    setAssign(userId);
+    if (!userId) return;
+    onUpdateAssign(ticket.id, userId);
   };
 
   return (
@@ -458,23 +486,31 @@ const TicketDetail = ({ ticket, onClose, onUpdateStatut, onUpdatePriorite, onUpd
           <span className="dp-id">{ticket.id}</span>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
+
         <div className="dp-title">{ticket.titre}</div>
         <div className="dp-meta">
           <span className={`tbadge ${priorite === "urgent" ? "urgent" : "normal"}`}>{priorite}</span>
           <span className={`tbadge ${statut}`}>{statutLabel[statut]}</span>
           <span style={{ fontSize: 10.5, background: "#F4F5FA", padding: "3px 8px", borderRadius: 5, color: "#6B7280" }}>{ticket.service}</span>
         </div>
+
         <p style={{ fontSize: 12.5, color: "#6B7280", lineHeight: 1.6 }}>{ticket.desc}</p>
         <div className="divider"/>
+
         {[["Service", ticket.service], ["Date", ticket.date]].map(([k,v]) => (
           <div className="dp-row" key={k}><span className="dk">{k}</span><span className="dv">{v}</span></div>
         ))}
+
         <div className="dp-row">
           <span className="dk">Assigné à</span>
           <select className="mini-select" value={assign} onChange={e => changeAssign(e.target.value)}>
-            {assignOptions.map(name => <option key={name} value={name}>{name}</option>)}
+            <option value="">Choisir un employé</option>
+            {assignableUsers.map(u => (
+              <option key={u.id} value={String(u.id)}>{getUserName(u)}</option>
+            ))}
           </select>
         </div>
+
         <div className="dp-row">
           <span className="dk">Statut</span>
           <select className="mini-select" value={statut} onChange={e => { setStatut(e.target.value); onUpdateStatut(ticket.id, e.target.value); }}>
@@ -483,6 +519,7 @@ const TicketDetail = ({ ticket, onClose, onUpdateStatut, onUpdatePriorite, onUpd
             <option value="resolu">Résolu</option>
           </select>
         </div>
+
         <div className="dp-row">
           <span className="dk">Priorité</span>
           <select className="mini-select" value={priorite} onChange={e => { setPriorite(e.target.value); onUpdatePriorite(ticket.id, e.target.value); }}>
@@ -490,6 +527,7 @@ const TicketDetail = ({ ticket, onClose, onUpdateStatut, onUpdatePriorite, onUpd
             <option value="urgent">Urgent</option>
           </select>
         </div>
+
         <div className="divider"/>
         <div className="card-title" style={{ fontSize: 13, marginBottom: 8 }}>Historique</div>
         {ticket.history.map((h, i) => (
@@ -498,17 +536,8 @@ const TicketDetail = ({ ticket, onClose, onUpdateStatut, onUpdatePriorite, onUpd
             <div><div className="h-action">{h.action} — <strong>{h.who}</strong></div><div className="h-time">{h.time}</div></div>
           </div>
         ))}
-        <div className="divider"/>
-        <div className="card-title" style={{ fontSize: 13, marginBottom: 8 }}>Commentaires ({ticket.comments.length})</div>
-        {ticket.comments.length === 0 && <p style={{ fontSize: 12, color: "#B0B7C3", marginBottom: 8 }}>Aucun commentaire.</p>}
-        {ticket.comments.map((c, i) => (
-          <div className="comment-item" key={i}>
-            <div className="c-top"><span className="c-author">{c.author}</span><span className="c-time">{c.time}</span></div>
-            <div className="c-body">{c.body}</div>
-          </div>
-        ))}
-        <textarea className="comment-box" rows={3} placeholder="Ajouter un commentaire..." value={comment} onChange={e => setComment(e.target.value)}/>
-        <button className="btn-send" onClick={() => { if (!comment.trim()) return; onAddComment(ticket.id, comment.trim()); setComment(""); }}>Envoyer</button>
+
+       
       </div>
     </div>
   );
@@ -630,21 +659,61 @@ const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refres
     }
   };
 
-  const updateAssign = async (id, assign, assignType) => {
+  const updateAssign = async (id, userId) => {
     try {
-      // Find user ID from real users list first, fallback to static map
-      const userFromDB = users.find(u => u.nom === assign);
-      const userId = userFromDB?.id || INTERVENANT_IDS[assign];
-      if (assignType === "interne" && userId) {
-        await ticketsAPI.assign(getApiId(id), userId);
+      if (!userId) {
+        showToast("❌ Choisissez un employé");
+        return;
       }
-      setTickets(p => p.map(t => t.id === id ? { ...t, assign, assignType, history: [...(t.history || []), { action:`Assigné à → ${assign} (${assignType})`, who:"Responsable", time:"À l'instant", color:"#10B981" }] } : t));
-      if (selected?.id === id) setSelected(p => ({ ...p, assign, assignType }));
-      showToast(assignType === "externe" ? "👤 Assignation externe sauvegardée côté interface" : "👤 Assignation mise à jour dans Laravel !");
+
+      const userFromDB = users.find(u => String(u.id) === String(userId));
+
+      if (!userFromDB) {
+        console.log("USERS FROM DB:", users);
+        console.log("USER ID SELECTED:", userId);
+        showToast("❌ Utilisateur introuvable dans la base");
+        return;
+      }
+
+      const assignName = userFromDB.nom || userFromDB.name || "Utilisateur";
+      await ticketsAPI.assign(getApiId(id), userFromDB.id);
+
+      setTickets(p =>
+        p.map(t =>
+          t.id === id
+            ? {
+                ...t,
+                assign: assignName,
+                assignId: userFromDB.id,
+                statut: "cours",
+                history: [
+                  ...(t.history || []),
+                  {
+                    action: `Assigné à → ${assignName}`,
+                    who: "Responsable",
+                    time: "À l'instant",
+                    color: "#10B981",
+                  },
+                ],
+              }
+            : t
+        )
+      );
+
+      if (selected?.id === id) {
+        setSelected(p => ({
+          ...p,
+          assign: assignName,
+          assignId: userFromDB.id,
+          statut: "cours",
+        }));
+      }
+
+      showToast("✅ Assignation réussie !");
       refreshTickets?.();
     } catch (err) {
       console.error(err);
-      showToast("❌ Erreur assignation : vérifiez ID intervenant");
+      showToast("❌ Erreur assignation : vérifiez votre route Laravel");
     }
   };
 
@@ -702,7 +771,9 @@ const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refres
                     </td>
                     <td><span className={`tbadge ${t.priorite==="urgent"?"urgent":"normal"}`}>{t.priorite}</span></td>
                     <td><span className={`tbadge ${t.statut}`}>{statutLabel[t.statut]}</span></td>
-                    <td style={{ fontSize:12 }}>{t.assign}</td>
+<td style={{ fontSize:12 }}>
+  {t.assign || "Non assigné"}
+</td>
                     <td style={{ fontSize:12, color:"#9CA3AF" }}>{t.date}</td>
                   </tr>
                 ))
@@ -797,8 +868,9 @@ export default function Responsable() {
     try {
       setLoadingTickets(true);
       const res = await ticketsAPI.getAll();
-      // API returns { data: [...] } or plain array
-      const list = res?.data ?? (Array.isArray(res) ? res : []);
+      // Accepte toutes les formes : array, {data: array}, ou axios {data:{data: array}}
+      const payload = res?.data ?? res;
+      const list = Array.isArray(payload) ? payload : (Array.isArray(payload?.data) ? payload.data : []);
       setTickets(list.map(normalizeTicket));
     } catch (err) {
       console.error(err);
@@ -812,8 +884,16 @@ export default function Responsable() {
   useEffect(() => {
     fetchTickets();
     usersAPI.getAll()
-      .then(data => setUsers(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .then(res => {
+        // Accepte toutes les formes : array, {data: array}, ou axios {data:{data: array}}
+        const payload = res?.data ?? res;
+        const list = Array.isArray(payload) ? payload : (Array.isArray(payload?.data) ? payload.data : []);
+        setUsers(list);
+      })
+      .catch(err => {
+        console.error("Erreur chargement users", err);
+        setUsers([]);
+      });
   }, []);
 
   useEffect(() => {

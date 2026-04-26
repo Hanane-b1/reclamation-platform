@@ -7,12 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 class Ticket extends Model
 {
     protected $fillable = [
-        'titre', 'service', 'description',
-        'priorite', 'statut', 'created_by', 'assigned_to', 'comments',
+        'titre',
+        'service',
+        'description',
+        'priorite',
+        'statut',
+        'created_by',
+        'assigned_to',
+        'comments',
+        'pieces_jointes',
     ];
 
     protected $casts = [
         'comments' => 'array',
+        'pieces_jointes' => 'array',
     ];
 
     public function creator()
