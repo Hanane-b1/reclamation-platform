@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
+import { ticketsAPI } from "./api";
 import MessagerieePage, { MSG_CSS } from "./MessagerieePage";
 
 // ── CSS ────────────────────────────────────────────────────────────────────
@@ -70,7 +72,7 @@ const CSS = `
   .emp-pri-badge { font-size: 9.5px; font-weight: 700; padding: 3px 7px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
   .emp-pri-badge.urgent  { background: #FEE2E2; color: #B91C1C; }
   .emp-pri-badge.haute   { background: #FEF3C7; color: #92400E; }
-  .emp-pri-badge.normale { background: #EEF2FF; color: #4338CA; }
+  .emp-pri-badge.normal { background: #EEF2FF; color: #4338CA; }
   .emp-pri-badge.faible  { background: #F3F4F6; color: #6B7280; }
   .emp-card-title { font-size: 13px; font-weight: 500; color: #111827; margin-bottom: 8px; line-height: 1.4; }
   .emp-card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -175,7 +177,7 @@ const CSS = `
   .emp-pri-opt { padding: 8px; border: 1.5px solid #E5E7EB; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; font-family: 'DM Sans', sans-serif; background: #fff; color: #6B7280; transition: all 0.15s; }
   .emp-pri-opt.sel-urgent  { background: #FEE2E2; border-color: #FCA5A5; color: #B91C1C; }
   .emp-pri-opt.sel-haute   { background: #FEF3C7; border-color: #FCD34D; color: #92400E; }
-  .emp-pri-opt.sel-normale { background: #EEF2FF; border-color: #A5B4FC; color: #4338CA; }
+  .emp-pri-opt.sel-normal { background: #EEF2FF; border-color: #A5B4FC; color: #4338CA; }
   .emp-pri-opt.sel-faible  { background: #F3F4F6; border-color: #D1D5DB; color: #6B7280; }
   .emp-upload-zone { border: 1.5px dashed #D1D5DB; border-radius: 10px; padding: 22px; text-align: center; cursor: pointer; }
   .emp-upload-zone:hover { border-color: #4F46E5; background: #FAFBFF; }
@@ -274,7 +276,7 @@ const TICKETS_INIT = [
   },
   {
     id: "ID-68245", titre: "Accès portail client bloqué",
-    service: "Support IT", cat: "Authentification", priorite: "normale",
+    service: "Support IT", cat: "Authentification", priorite: "normal",
     statut: "attente", date: "18 Oct 2023", creePar: true, assignee: false, prog: 0,
     description: "Impossible de se connecter au portail depuis la mise à jour.",
     timeline: [
@@ -283,7 +285,7 @@ const TICKETS_INIT = [
   },
   {
     id: "ID-88312", titre: "Mise à jour coordonnées fournisseur",
-    service: "Technique", cat: "Info client", priorite: "normale",
+    service: "Technique", cat: "Info client", priorite: "normal",
     statut: "cours", date: "10 Nov 2023", creePar: false, assignee: true, prog: 50,
     description: "Les coordonnées du fournisseur principal doivent être actualisées.",
     timeline: [
@@ -563,7 +565,7 @@ const DetailPanel = ({ ticket, onClose, onMove, onEdit, onDelete }) => {
 // ── MODAL ──────────────────────────────────────────────────────────────────
 const ModalNouvelleReclamation = ({ onClose, onSubmit }) => {
   const [form, setForm]   = useState({ titre: "", service: "", cat: "", description: "" });
-  const [pri,  setPri]    = useState("normale");
+  const [pri,  setPri]    = useState("normal");
 
   return (
     <div className="emp-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -606,7 +608,7 @@ const ModalNouvelleReclamation = ({ onClose, onSubmit }) => {
           </div>
           <div className="emp-modal-section">Priorité</div>
           <div className="emp-pri-group">
-            {["urgent","haute","normale","faible"].map((p) => (
+            {["urgent","haute","normal","faible"].map((p) => (
               <button key={p} className={`emp-pri-opt${pri === p ? ` sel-${p}` : ""}`} onClick={() => setPri(p)}>
                 {p.charAt(0).toUpperCase() + p.slice(1)}
               </button>
@@ -686,7 +688,7 @@ const ModalModifier = ({ ticket, onClose, onSave }) => {
           </div>
           <div className="emp-modal-section">Priorité</div>
           <div className="emp-pri-group">
-            {["urgent","haute","normale","faible"].map((p) => (
+            {["urgent","haute","normal","faible"].map((p) => (
               <button key={p} className={`emp-pri-opt${pri === p ? ` sel-${p}` : ""}`} onClick={() => setPri(p)}>
                 {p.charAt(0).toUpperCase() + p.slice(1)}
               </button>
@@ -733,7 +735,7 @@ const ConfirmDelete = ({ ticket, onCancel, onConfirm }) => (
 );
 
 // ── PAGE KANBAN ────────────────────────────────────────────────────────────
-const MesReclamationsPage = ({ tickets, setTickets, showToast }) => {
+const MesReclamationsPage = ({ tickets, setTickets, showToast, currentUser }) => {
   const [activeFilter, setActiveFilter] = useState("toutes");
   const [selected,     setSelected]     = useState(null);
   const [editTicket,   setEditTicket]   = useState(null);
@@ -748,7 +750,11 @@ const MesReclamationsPage = ({ tickets, setTickets, showToast }) => {
 
   const getCol = (statut) => tickets.filter((t) => t.statut === statut && filterFn(t));
 
-  const moveTicket = (id, toStatut) => {
+  const moveTicket = async (id, toStatut) => {
+    const ticket = tickets.find(t => t.id === id);
+    if (ticket?._id) {
+      try { await ticketsAPI.updateStatus(ticket._id, toStatut); } catch (_) {}
+    }
     setTickets((prev) =>
       prev.map((t) => {
         if (t.id !== id || t.statut === toStatut) return t;
@@ -768,14 +774,33 @@ const MesReclamationsPage = ({ tickets, setTickets, showToast }) => {
     showToast(`✅ Déplacé vers « ${statutLabel[toStatut]} »`);
   };
 
-  const handleSaveEdit = (fields) => {
+  const handleSaveEdit = async (fields) => {
     const updated = { ...editTicket, ...fields, timeline: [...editTicket.timeline, { icon: "✏️", bg: "#EEF2FF", text: <><strong>Réclamation modifiée</strong></>, time: nowStr() }] };
+    if (editTicket._id) {
+      try {
+        await ticketsAPI.update(editTicket._id, { titre: fields.titre, service: fields.service, description: fields.description, priorite: fields.priorite });
+      } catch (err) {
+        showToast("⚠️ Erreur modification: " + err.message);
+        return;
+      }
+    }
     setTickets((prev) => prev.map((t) => t.id === updated.id ? updated : t));
     setEditTicket(null);
     showToast("✏️ Réclamation modifiée avec succès !");
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
+    // Find the real DB id (_id) from the ticket
+    const ticket = tickets.find(t => t.id === id);
+    const realId = ticket?._id;
+    if (realId) {
+      try {
+        await ticketsAPI.delete(realId);
+      } catch (err) {
+        showToast("⚠️ Erreur suppression: " + err.message);
+        return;
+      }
+    }
     setTickets((prev) => prev.filter((t) => t.id !== id));
     setDeleteTicket(null);
     setSelected(null);
@@ -854,14 +879,16 @@ const MesReclamationsPage = ({ tickets, setTickets, showToast }) => {
 };
 
 // ── PAGES PROFIL / PARAMS ──────────────────────────────────────────────────
-const MonProfilPage = () => (
+const MonProfilPage = ({ currentUser }) => (
   <div className="emp-profil-card">
     <div className="emp-profil-header">
-      <div className="emp-profil-av" style={{ background: "#10B981" }}>SL</div>
+      <div className="emp-profil-av" style={{ background: "#10B981" }}>
+        {currentUser ? currentUser.nom.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase() : "?"}
+      </div>
       <div>
-        <div className="emp-profil-name">Sarah Lemarié</div>
-        <div className="emp-profil-email">sarah@bayan.ma</div>
-        <div className="emp-profil-badge">Employée</div>
+        <div className="emp-profil-name">{currentUser?.nom || "Utilisateur"}</div>
+        <div className="emp-profil-email">{currentUser?.email || ""}</div>
+        <div className="emp-profil-badge">{currentUser?.role || "Employé"}</div>
       </div>
     </div>
     {[
@@ -973,14 +1000,45 @@ const NotificationPanel = ({ notifs, onMarkAll, onMarkOne, onClose }) => {
 // ── MAIN ───────────────────────────────────────────────────────────────────
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
 
   const [activePage,   setActivePage]   = useState("mes");
-  const [tickets,      setTickets]      = useState(TICKETS_INIT);
+  const [tickets,      setTickets]      = useState([]);
+  const [loading,      setLoading]      = useState(true);
   const [showModal,    setShowModal]    = useState(false);
   const [toast,        setToast]        = useState(null);
   const [notifs,       setNotifs]       = useState(NOTIFS_INIT);
   const [showNotifs,   setShowNotifs]   = useState(false);
   const toastTimer = useRef(null);
+
+  // ── Load tickets from API on mount ──
+  useEffect(() => {
+    ticketsAPI.getAll()
+      .then(data => {
+        // API returns all tickets; filter to only those belonging to current user
+        const myTickets = (data.data || data).filter(t =>
+          t.created_by === currentUser?.id || t.assigned_to === currentUser?.id
+        );
+        // Map API shape → UI shape
+        const mapped = myTickets.map(t => ({
+          id:          `ID-${String(t.id).padStart(5,"0")}`,
+          _id:         t.id,
+          titre:       t.titre || t.title,
+          service:     t.service,
+          priorite:    t.priorite || "normal",
+          statut:      t.statut || "attente",
+          date:        t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "",
+          creePar:     t.created_by === currentUser?.id,
+          assignee:    t.assigned_to === currentUser?.id,
+          prog:        t.statut === "resolu" ? 100 : t.statut === "cours" ? 50 : 0,
+          description: t.description || "",
+          timeline:    [{ icon: "🔵", bg: "#EEF2FF", text: <><strong>Réclamation créée</strong></>, time: t.created_at || "" }],
+        }));
+        setTickets(mapped);
+      })
+      .catch(() => setTickets([]))
+      .finally(() => setLoading(false));
+  }, [currentUser]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -988,24 +1046,36 @@ export default function EmployeeDashboard() {
     toastTimer.current = setTimeout(() => setToast(null), 2600);
   };
 
-  const handleSubmit = ({ titre, service, cat, description, priorite }) => {
-    const d = new Date();
-    const mois = ["Jan","Fév","Mar","Avr","Mai","Juin","Jul","Août","Sep","Oct","Nov","Déc"];
-    const date = `${d.getDate().toString().padStart(2,"0")} ${mois[d.getMonth()]} ${d.getFullYear()}`;
-    const heure = `${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`;
-    setTickets((prev) => [{
-      id: "ID-" + Math.floor(10000 + Math.random() * 90000),
-      titre, service, cat: cat || "Autre", description, priorite,
-      statut: "attente", date, creePar: true, assignee: false, prog: 0,
-      timeline: [{ icon: "🔵", bg: "#EEF2FF", text: <><strong>Réclamation créée</strong> par vous</>, time: `${date} – ${heure}` }],
-    }, ...prev]);
-    setShowModal(false);
-    setActivePage("mes");
-    showToast("✅ Réclamation soumise avec succès !");
+  const handleSubmit = async ({ titre, service, cat, description, priorite }) => {
+    try {
+      const res = await ticketsAPI.create({ titre, service, categorie: cat || "Autre", description, priorite, statut: "attente" });
+      const t = res.ticket || res;
+      const newTicket = {
+        id:          `ID-${String(t.id).padStart(5,"0")}`,
+        _id:         t.id,
+        titre:       t.titre || titre,
+        service:     t.service || service,
+          priorite:    t.priorite || priorite,
+        statut:      "attente",
+        date:        new Date().toLocaleDateString("fr-FR"),
+        creePar:     true,
+        assignee:    false,
+        prog:        0,
+        description: t.description || description,
+        timeline:    [{ icon: "🔵", bg: "#EEF2FF", text: <><strong>Réclamation créée</strong> par vous</>, time: nowStr() }],
+      };
+      setTickets(prev => [newTicket, ...prev]);
+      setShowModal(false);
+      setActivePage("mes");
+      showToast("✅ Réclamation soumise — en attente d'assignation.");
+    } catch (err) {
+      showToast("⚠️ Erreur: " + err.message);
+    }
   };
 
   const handleNav = (key) => {
     if (key === "nouvelle") { setShowModal(true); return; }
+    if (key === "logout") { logout().then(() => navigate("/login")); return; }
     setActivePage(key);
   };
 
@@ -1025,12 +1095,13 @@ export default function EmployeeDashboard() {
   ];
 
   const renderPage = () => {
+    if (loading) return <div style={{padding:40,textAlign:"center",color:"#9CA3AF"}}>Chargement...</div>;
     switch (activePage) {
-      case "mes":         return <MesReclamationsPage tickets={tickets} setTickets={setTickets} showToast={showToast} />;
+      case "mes":         return <MesReclamationsPage tickets={tickets} setTickets={setTickets} showToast={showToast} currentUser={currentUser} />;
       case "messagerie":  return <MessagerieePage />;
-      case "profil":      return <MonProfilPage />;
+      case "profil":      return <MonProfilPage currentUser={currentUser} />;
       case "params":      return <ParametresPage />;
-      default:            return <MesReclamationsPage tickets={tickets} setTickets={setTickets} showToast={showToast} />;
+      default:            return <MesReclamationsPage tickets={tickets} setTickets={setTickets} showToast={showToast} currentUser={currentUser} />;
     }
   };
 
@@ -1059,10 +1130,12 @@ export default function EmployeeDashboard() {
             ))}
           </nav>
           <div className="emp-sidebar-user">
-            <div className="emp-user-avatar" style={{ background: "#10B981" }}>SL</div>
+            <div className="emp-user-avatar" style={{ background: "#10B981" }}>
+              {currentUser ? currentUser.nom.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase() : "?"}
+            </div>
             <div>
-              <div className="emp-user-name">Sarah Lemarié</div>
-              <div className="emp-user-role">Employée</div>
+              <div className="emp-user-name">{currentUser?.nom || "Utilisateur"}</div>
+              <div className="emp-user-role">{currentUser?.role || "Employé"}</div>
             </div>
           </div>
         </aside>
@@ -1094,7 +1167,7 @@ export default function EmployeeDashboard() {
                 </svg>
                 Nouvelle réclamation
               </button>
-              <button className="emp-icon-btn" onClick={() => navigate("/login")} title="Déconnexion">
+              <button className="emp-icon-btn" onClick={async () => { await logout(); navigate("/login"); }} title="Déconnexion">
                 <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                   <path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M10 11l3-3-3-3M13 8H6"
                     stroke="#6B7280" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 import MessagerieePage, { MSG_CSS } from "./MessagerieePage";
-import { ticketsAPI } from "./api";
+import { ticketsAPI, usersAPI } from "./api";
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -340,7 +341,7 @@ const normalizeTicket = (t) => {
     priorite: t.priorite || "normal",
     statut: t.statut || "attente",
     date: t.created_at ? new Date(t.created_at).toLocaleDateString("fr-FR") : "—",
-    assign: isExterne ? "Prestataire externe" : (t.assigned_to?.nom || t.assignedTo?.nom || "Non assigné"),
+    assign: isExterne ? "Prestataire externe" : (typeof t.assigned_to === "object" ? t.assigned_to?.nom : null) || (typeof t.assignedTo === "object" ? t.assignedTo?.nom : null) || "Non assigné",
     assignType: isExterne ? "externe" : "interne",
     desc: t.description || "Aucune description.",
   comments: (t.commentaires || []).map((c) => ({
@@ -426,14 +427,17 @@ const Logo = () => (
 );
 
 // ── TICKET DETAIL PANEL ───────────────────────────────────
-const TicketDetail = ({ ticket, onClose, onUpdateStatut, onUpdatePriorite, onUpdateAssign, onAddComment }) => {
+const TicketDetail = ({ ticket, onClose, onUpdateStatut, onUpdatePriorite, onUpdateAssign, onAddComment, users = [] }) => {
   const [comment,  setComment]  = useState("");
   const [statut,   setStatut]   = useState(ticket.statut);
   const [priorite, setPriorite] = useState(ticket.priorite);
   const [assignType, setAssignType] = useState(ticket.assignType || "interne");
   const [assign, setAssign] = useState(ticket.assign || INTERVENANTS_INTERNES[0]);
 
-  const assignOptions = assignType === "interne" ? INTERVENANTS_INTERNES : INTERVENANTS_EXTERNES;
+  // Use real users from DB if available, fallback to static list
+  const internesFromDB = users.filter(u => u.role !== "admin").map(u => u.nom);
+  const internesOptions = internesFromDB.length > 0 ? internesFromDB : INTERVENANTS_INTERNES;
+  const assignOptions = assignType === "interne" ? internesOptions : INTERVENANTS_EXTERNES;
 
   const changeAssignType = (type) => {
     const firstValue = type === "interne" ? INTERVENANTS_INTERNES[0] : INTERVENANTS_EXTERNES[0];
@@ -580,7 +584,7 @@ const OverviewPage = ({ tickets, setActivePage, setFilterService }) => {
 };
 
 // ── TICKETS PAGE ──────────────────────────────────────────
-const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refreshTickets }) => {
+const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refreshTickets, users = [] }) => {
   const [filterStatut,   setFilterStatut]   = useState("tous");
   const [filterService,  setFilterService]  = useState(filterServiceInit || "tous");
   const [filterPriorite, setFilterPriorite] = useState("tous");
@@ -628,7 +632,9 @@ const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refres
 
   const updateAssign = async (id, assign, assignType) => {
     try {
-      const userId = INTERVENANT_IDS[assign];
+      // Find user ID from real users list first, fallback to static map
+      const userFromDB = users.find(u => u.nom === assign);
+      const userId = userFromDB?.id || INTERVENANT_IDS[assign];
       if (assignType === "interne" && userId) {
         await ticketsAPI.assign(getApiId(id), userId);
       }
@@ -705,7 +711,7 @@ const TicketsPage = ({ tickets, setTickets, showToast, filterServiceInit, refres
           </table>
         </div>
       </div>
-      {selected && <TicketDetail ticket={selected} onClose={() => setSelected(null)} onUpdateStatut={updateStatut} onUpdatePriorite={updatePriorite} onUpdateAssign={updateAssign} onAddComment={addComment}/>}
+      {selected && <TicketDetail ticket={selected} onClose={() => setSelected(null)} onUpdateStatut={updateStatut} onUpdatePriorite={updatePriorite} onUpdateAssign={updateAssign} onAddComment={addComment} users={users}/>}
     </div>
   );
 };
@@ -765,6 +771,7 @@ const pageTitles = { overview:"Vue d'ensemble — Tous les services", tickets:"T
 // ── MAIN EXPORT ───────────────────────────────────────────
 export default function Responsable() {
   const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
   const [activePage,      setActivePage]      = useState("overview");
   const [tickets,         setTickets]         = useState([]);
   const [loadingTickets,  setLoadingTickets]  = useState(true);
@@ -773,6 +780,7 @@ export default function Responsable() {
   const [toast,           setToast]           = useState(null);
   const [filterService,   setFilterService]   = useState("tous");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [users, setUsers] = useState([]);
   const notifRef = useRef(null);
   const toastRef = useRef(null);
 
@@ -788,8 +796,10 @@ export default function Responsable() {
   const fetchTickets = async () => {
     try {
       setLoadingTickets(true);
-      const data = await ticketsAPI.getAll();
-      setTickets(Array.isArray(data) ? data.map(normalizeTicket) : []);
+      const res = await ticketsAPI.getAll();
+      // API returns { data: [...] } or plain array
+      const list = res?.data ?? (Array.isArray(res) ? res : []);
+      setTickets(list.map(normalizeTicket));
     } catch (err) {
       console.error(err);
       setTickets([]);
@@ -801,6 +811,9 @@ export default function Responsable() {
 
   useEffect(() => {
     fetchTickets();
+    usersAPI.getAll()
+      .then(data => setUsers(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -823,7 +836,7 @@ export default function Responsable() {
   const renderPage = () => {
     switch (activePage) {
       case "overview": return <OverviewPage tickets={tickets} setActivePage={setActivePage} setFilterService={goToServiceTickets}/>;
-      case "tickets":  return <TicketsPage  tickets={tickets} setTickets={setTickets} showToast={showToast} filterServiceInit={filterService} refreshTickets={fetchTickets}/>;
+      case "tickets":  return <TicketsPage  tickets={tickets} setTickets={setTickets} showToast={showToast} filterServiceInit={filterService} refreshTickets={fetchTickets} users={users}/>;
       case "activite": return <ActivitePage tickets={tickets}/>;
       case "chatbot":  return <ChatbotPage  tickets={tickets}/>;
       default:         return <OverviewPage tickets={tickets} setActivePage={setActivePage} setFilterService={goToServiceTickets}/>;
@@ -857,10 +870,12 @@ export default function Responsable() {
             })}
           </div>
           <div className="sidebar-user">
-            <div className="u-av">RS</div>
+            <div className="u-av">
+              {currentUser ? currentUser.nom.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase() : "RS"}
+            </div>
             <div>
-              <div className="u-name">Responsable</div>
-              <div className="u-role">Tous les services</div>
+              <div className="u-name">{currentUser?.nom || "Responsable"}</div>
+              <div className="u-role">{currentUser?.role || "Responsable"}</div>
             </div>
           </div>
         </aside>
@@ -894,7 +909,7 @@ export default function Responsable() {
                   </div>
                 )}
               </div>
-              <button className="icon-btn" onClick={() => navigate("/")} title="Déconnexion">
+              <button className="icon-btn" onClick={async () => { await logout(); navigate("/login"); }} title="Déconnexion">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M10 11l3-3-3-3M13 8H6" stroke="#6B7280" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
             </div>
@@ -906,4 +921,3 @@ export default function Responsable() {
     </>
   );
 }
-
