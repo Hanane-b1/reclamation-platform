@@ -15,6 +15,7 @@ return new class extends Migration
             $table->text('contenu');
             $table->string('fichier_nom')->nullable();
             $table->string('fichier_taille')->nullable();
+            $table->string('file_path')->nullable(); // ← was missing
             $table->boolean('lu')->default(false);
             $table->timestamps();
         });

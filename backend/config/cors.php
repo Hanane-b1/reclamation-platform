@@ -6,7 +6,7 @@
 return [
     'paths'                    => ['api/*'],
     'allowed_methods'          => ['*'],
-    'allowed_origins'          => ['http://localhost:5173'], // URL Vite React
+    'allowed_origins'          => ['*'], // URL Vite React
     'allowed_origins_patterns' => [],
     'allowed_headers'          => ['*'],
     'exposed_headers'          => [],
