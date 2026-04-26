@@ -323,8 +323,21 @@ const sendMessage = async () => {
   try {
     const sent = await messagesAPI.send(activeContact.id, text);
 
+    // Normalize backend response to frontend shape
+    const normalizedMsg = {
+      id: sent.id ?? tempMsg.id,
+      from: "me",
+      contenu: sent.contenu ?? text,
+      time: sent.time ?? tempMsg.time,
+      date: sent.date ?? "Aujourd'hui",
+      lu: sent.lu ?? false,
+      fichier_nom: sent.fichier_nom ?? null,
+      fichier_taille: sent.fichier_taille ?? null,
+      file_path: sent.file_path ?? null,
+    };
+
     setMessages((prev) =>
-      prev.map((m) => (m.id === tempMsg.id ? sent : m))
+      prev.map((m) => (m.id === tempMsg.id ? normalizedMsg : m))
     );
 
   } catch (e) {
@@ -358,8 +371,20 @@ const handleAttachFile = async (e) => {
   try {
     const sent = await messagesAPI.send(activeContact.id, "Fichier joint", file);
 
+    const normalizedMsg = {
+      id: sent.id ?? tempMsg.id,
+      from: "me",
+      contenu: sent.contenu ?? "Fichier joint",
+      time: sent.time ?? tempMsg.time,
+      date: sent.date ?? "Aujourd'hui",
+      lu: sent.lu ?? false,
+      fichier_nom: sent.fichier_nom ?? file.name,
+      fichier_taille: sent.fichier_taille ?? tempMsg.fichier_taille,
+      file_path: sent.file_path ?? null,
+    };
+
     setMessages((prev) =>
-      prev.map((m) => (m.id === tempMsg.id ? sent : m))
+      prev.map((m) => (m.id === tempMsg.id ? normalizedMsg : m))
     );
 
   } catch (e) {
@@ -370,7 +395,7 @@ const handleAttachFile = async (e) => {
  
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); messagesAPI.send(activeContact.id, text); }
   };
 
   const insertEmoji = (emoji) => {

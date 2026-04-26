@@ -92,7 +92,7 @@ $users = User::where('id', '!=', $meId)
         }));
     }
 
-public function send(Request $request)
+    public function send(Request $request)
 {
     $request->validate([
         'receiver_id' => 'required|exists:users,id',
@@ -119,8 +119,6 @@ public function send(Request $request)
         'date' => "Aujourd'hui",
     ], 201);
 }
-
-
 
     public function unreadCount()
     {
